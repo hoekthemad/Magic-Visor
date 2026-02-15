@@ -27,143 +27,68 @@
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        #editor-container {
-            position: relative;
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-        }
+        #editor-container { position: relative; flex: 1; overflow: hidden; display: flex; }
 
+        /* CRITICAL SYNC: Fixed alignment and formatting */
         #editor, #highlight-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            margin: 0; padding: 20px;
-            padding-right: 80px; /* Room for minimap */
-            padding-bottom: 250px; /* FIXED: Scroll the bottom to the top */
-            font-family: var(--code-font);
-            font-size: 15px;
-            line-height: 1.6;
-            tab-size: 4;
-            white-space: pre; /* Changed to pre to prevent wrap-desync */
-            word-wrap: normal;
-            border: none;
-            overflow: auto;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            margin: 0; padding: 20px 80px 300px 20px;
+            font-family: var(--code-font); font-size: 14px; line-height: 1.5;
+            tab-size: 4; -moz-tab-size: 4; white-space: pre; word-wrap: normal;
+            border: none; overflow: auto; -webkit-font-smoothing: antialiased;
         }
 
-        #editor {
-            background: transparent;
-            color: transparent;
-            caret-color: #fff;
-            resize: none;
-            z-index: 2;
-            -webkit-text-fill-color: transparent;
+        #editor { 
+            background: transparent; color: transparent; caret-color: #fff; 
+            z-index: 2; resize: none; -webkit-text-fill-color: transparent; 
         }
+        #highlight-layer { z-index: 1; color: #abb2bf; pointer-events: none; display: block; }
 
-        #highlight-layer {
-            z-index: 1;
-            color: #d1d1d1;
-            pointer-events: none;
-            display: block;
-        }
-
-        /* IMPROVED MINIMAP */
+        /* MINIMAP */
         #minimap-gutter {
-            position: absolute;
-            top: 0; right: 0; width: 60px; height: 100%;
-            background: rgba(0,0,0,0.4);
-            border-left: 1px solid var(--border);
-            z-index: 10;
-            overflow: hidden;
-            touch-action: none;
+            position: absolute; top: 0; right: 0; width: 60px; height: 100%;
+            background: rgba(0,0,0,0.4); border-left: 1px solid var(--border);
+            z-index: 10; overflow: hidden; touch-action: none;
         }
-
-        #minimap-content {
-            font-size: 3px;
-            line-height: 3px;
-            padding: 5px;
-            white-space: pre;
-            color: var(--text-dim);
-            opacity: 0.4;
-            transform-origin: top left;
-        }
-
+        #minimap-content { font-size: 2px; line-height: 2px; padding: 5px; white-space: pre; color: var(--text-dim); opacity: 0.3; }
         #minimap-viewport {
-            position: absolute;
-            top: 0; left: 0; width: 100%;
-            background: rgba(142, 191, 255, 0.15);
-            border-top: 1px solid var(--accent);
-            border-bottom: 1px solid var(--accent);
-            pointer-events: none;
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: rgba(142, 191, 255, 0.1); border-top: 1px solid var(--accent);
+            border-bottom: 1px solid var(--accent); pointer-events: none;
         }
 
-        /* SYNTAX COLORS */
-        .hl-tag { color: #8ebfff; } /* Cyan Tags */
-        .hl-attr { color: #ffcc66; } /* Yellow Attributes */
-        .hl-str { color: #a8e6cf; } /* Green Strings */
-        .hl-comm { color: #5c6370; font-style: italic; } /* Grey Comments */
-        .hl-num { color: #f78c6c; } /* Orange Numbers */
-        .hl-key { color: #c792ea; } /* Purple Keywords */
+        /* SYNTAX THEME */
+        .hl-comm { color: #5c6370; font-style: italic; }
+        .hl-str { color: #a8e6cf; }
+        .hl-tag { color: #8ebfff; }
+        .hl-attr { color: #ffcc66; }
+        .hl-key { color: #c792ea; }
+        .hl-num { color: #f78c6c; }
 
         #control-complex { position: relative; z-index: 100; background: var(--panel); border-top: 1px solid var(--border); }
-
-        #utility-row {
-            display: none; padding: 8px 15px; background: var(--ui);
-            border-bottom: 1px solid var(--border); justify-content: space-between; align-items: center;
-        }
-        .v-tag { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); margin-right: 10px; }
+        #utility-row { display: none; padding: 8px 15px; background: var(--ui); border-bottom: 1px solid var(--border); justify-content: space-between; align-items: center; }
         
-        #model-info { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .v-tag { font-size: 10px; font-weight: 800; color: var(--text-dim); margin-right: 10px; }
+        #model-info { font-size: 9px; color: var(--text-dim); text-transform: uppercase; }
         #model-info b { color: var(--accent); }
-
-        #model-selector {
-            background: #1a1a1a; color: var(--accent); border: 1px solid var(--border);
-            font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px;
-            text-transform: uppercase; appearance: none; margin-left: 10px;
-        }
-
-        .util-group { display: flex; gap: 18px; align-items: center; }
+        #model-selector { background: #1a1a1a; color: var(--accent); border: 1px solid var(--border); font-size: 9px; padding: 4px 8px; border-radius: 6px; appearance: none; }
 
         #command-dock { display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px 5px; }
-
-        .dock-btn {
-            background: transparent; border: none; display: flex; flex-direction: column; 
-            align-items: center; gap: 4px; color: var(--text-dim); transition: 0.2s;
-        }
+        .dock-btn { background: transparent; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-dim); }
         .dock-btn svg { width: 22px; height: 22px; fill: currentColor; }
         .dock-btn span { font-size: 9px; font-weight: 700; text-transform: uppercase; }
         .dock-btn.active { color: var(--accent); }
 
-        #input-dock { 
-            padding: 0 15px calc(15px + env(safe-area-inset-bottom)); 
-            display: flex; align-items: flex-end; gap: 10px; 
-        }
-        #input-container { 
-            flex: 1; background: var(--ui); border: 1px solid var(--border); 
-            border-radius: 18px; padding: 12px 16px; min-height: 48px; max-height: 150px;
-            display: flex; align-items: center;
-        }
-        #input { 
-            flex: 1; background: transparent; border: none; color: #fff; 
-            font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto;
-            max-height: 120px; padding: 0;
-        }
-        #go { 
-            background: var(--accent); border: none; width: 44px; height: 44px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-bottom: 2px;
-        }
+        #input-dock { padding: 0 15px calc(15px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 10px; }
+        #input-container { flex: 1; background: var(--ui); border: 1px solid var(--border); border-radius: 18px; padding: 12px 16px; min-height: 48px; max-height: 150px; display: flex; align-items: center; }
+        #input { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto; }
+        #go { background: var(--accent); border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        #archive {
-            position: fixed; inset: 0; background: var(--bg); z-index: 200;
-            display: none; flex-direction: column; padding: calc(40px + env(safe-area-inset-top)) 24px 40px;
-        }
-        .project-item {
-            background: var(--panel); padding: 18px; border-radius: 16px; margin-bottom: 12px;
-            border: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px;
-        }
-        .project-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .project-actions { display: flex; gap: 8px; border-top: 1px solid #1a1a1a; padding-top: 12px; justify-content: flex-end; }
-        .action-btn { background: #1a1a1a; border: none; color: #aaa; padding: 8px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; }
+        /* ARCHIVE & SEARCH */
+        #archive { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; padding: calc(40px + env(safe-area-inset-top)) 24px 40px; }
+        #archive-search { background: var(--ui); border: 1px solid var(--border); color: #fff; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 14px; width: 100%; }
+        .project-item { background: var(--panel); padding: 18px; border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+        .project-header { display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -173,7 +98,7 @@
 <div id="code-pane">
     <div id="editor-container">
         <div id="highlight-layer" aria-hidden="true"></div>
-        <textarea id="editor" spellcheck="false" oninput="sync(); handleEditorInput()" onscroll="syncScroll()"></textarea>
+        <textarea id="editor" spellcheck="false" oninput="handleEditorInput()" onscroll="syncScroll()"></textarea>
         <div id="minimap-gutter" onpointerdown="mapSeek(event)" onpointermove="mapSeek(event)">
             <div id="minimap-content"></div>
             <div id="minimap-viewport"></div>
@@ -194,7 +119,7 @@
                 <option value="designer">Designer</option>
             </select>
         </div>
-        <div class="util-group">
+        <div class="util-group" style="display:flex; gap:18px;">
             <button class="dock-btn" onclick="undo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></button>
             <button class="dock-btn" onclick="copyCurrent()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
             <button class="dock-btn" onclick="wipe()" style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
@@ -202,35 +127,23 @@
     </div>
 
     <nav id="command-dock">
-        <button class="dock-btn" id="btn-dev" onclick="toggleCode()">
-            <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-            <span>Develop</span>
-        </button>
-        <button class="dock-btn" onclick="openArchive()">
-            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-            <span>Archive</span>
-        </button>
-        <button class="dock-btn" onclick="save()">
-            <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-            <span>Save</span>
-        </button>
+        <button class="dock-btn" id="btn-dev" onclick="toggleCode()"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg><span>Develop</span></button>
+        <button class="dock-btn" onclick="openArchive()"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg><span>Archive</span></button>
+        <button class="dock-btn" onclick="save()"><svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg><span>Save</span></button>
     </nav>
 
     <div id="input-dock">
-        <div id="input-container">
-            <textarea id="input" rows="1" placeholder="Describe the magic..." oninput="autoExpand(this)"></textarea>
-        </div>
-        <button id="go" onclick="evolve()">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
+        <div id="input-container"><textarea id="input" rows="1" placeholder="Describe the magic..." oninput="autoExpand(this)"></textarea></div>
+        <button id="go" onclick="evolve()"><svg viewBox="0 0 24 24" width="20" height="20" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
     </div>
 </div>
 
 <div id="archive">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
         <h2 style="margin:0; font-size: 28px;">Archive</h2>
         <button style="background:transparent; border:none; color:var(--accent); font-weight:800;" onclick="closeArchive()">DONE</button>
     </div>
+    <input type="text" id="archive-search" placeholder="Search projects..." oninput="renderArchiveList()">
     <div id="list" style="overflow-y:auto; flex: 1;"></div>
 </div>
 
@@ -251,48 +164,39 @@
     const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
 
     const PROMPTS = {
-        architect: "EXPERT GAME ARCHITECT: Return a SINGLE valid HTML5 file. Use <canvas> for graphics. No emojis. MANDATORY: Use Touch Events for all inputs. Ensure the canvas scale matches window.innerWidth/Height for the mobile viewport. If updating code, ensure memory efficiency (backward loop splicing, cap objects). Use trail effects via alpha fillRect(0,0,w,h,0.1).",
-        technologist: "CREATIVE TECHNOLOGIST: Focus on high-end visuals, 'juice', and aesthetics. MANDATORY: All interactions must be Touch-based. Ensure canvas fills the mobile viewport (innerWidth/Height). Use particle systems, neon glows, and smooth easing animations. Return a single HTML5 file with <canvas>.",
-        engineer: "PERFORMANCE ENGINEER: Focus on raw speed and optimization. MANDATORY: Optimize for mobile touch latency. Ensure responsive canvas viewport. Use spatial partitioning for collisions, object pooling, and minimize draw calls. Return a single HTML5 file with <canvas>.",
-        analyst: "LOGIC ANALYST: Focus on complex mathematics, debugging, and data structures. MANDATORY: Fix logic for Touch Event coordinate mapping. Ensure viewport calculations are precise for mobile displays. Fix logic errors and optimize algorithms without changing the visual style. Return a single HTML5 file with <canvas>.",
-        designer: "UI/UX DESIGNER: Focus on the interface, touch responsiveness, menu systems, and layout. MANDATORY: Design for 'Thumb Zones' and mobile ergonomics. Ensure canvas is perfectly responsive to device orientation. Ensure the game looks professional and feels good to navigate. Return a single HTML5 file with <canvas>."
+        architect: "MANDATORY: Return a SINGLE HTML5 file. ABSOLUTELY NO 800x600 containers. Use <canvas> and CSS: body{margin:0;overflow:hidden;} canvas{width:100vw;height:100vh;display:block;touch-action:none;}. Map touch coordinates using canvas.getBoundingClientRect(). No emojis.",
+        technologist: "MANDATORY: High-end visuals. No fixed 800x600 boxes. Canvas MUST fill 100vw/100vh. No margins/scrollbars. Touch-based input only. No emojis.",
+        engineer: "MANDATORY: Performance focus. Responsive 100vw/100vh canvas. No fixed width/height containers. No emojis.",
+        analyst: "MANDATORY: Logic fix. Coordinate mapping for mobile touch. Eliminate fixed 800x600 containers. No emojis.",
+        designer: "MANDATORY: UI focus. 100vw/100vh canvas. Thumb-friendly controls. No emojis."
     };
 
-    const DESCRIPTIONS = {
-        architect: "<b>ARCH:</b> Structure",
-        technologist: "<b>TECH:</b> Visual Juice",
-        engineer: "<b>ENG:</b> Performance",
-        analyst: "<b>ANA:</b> Logic/Debug",
-        designer: "<b>DES:</b> UI/UX Design"
-    };
+    const DESCRIPTIONS = { architect: "<b>ARCH:</b> Structure", technologist: "<b>TECH:</b> Visual Juice", engineer: "<b>ENG:</b> Performance", analyst: "<b>ANA:</b> Logic", designer: "<b>DES:</b> UI/UX" };
 
-    function updateModelInfo() {
-        modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value];
-    }
+    function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value]; }
+    function autoExpand(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
-    function autoExpand(el) {
-        el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
-    }
-
-    /* ENHANCED HIGHLIGHTING ENGINE */
+    /* SINGLE-PASS HIGHLIGHTER: Stops "Highlighting the Highlights" */
     function applyHighlighting(code) {
-        return code
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") 
-            .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="hl-comm">$1</span>') // Comments
-            .replace(/(&lt;\/?[a-z1-6]+)/gi, '<span class="hl-tag">$1</span>') // Tags
-            .replace(/(\s)([a-z-]+)(?==)/gi, '$1<span class="hl-attr">$2</span>') // Attributes
-            .replace(/"([^"]*)"/g, '<span class="hl-str">"$1"</span>') // Strings
-            .replace(/'([^']*)'/g, '<span class="hl-str">\'$1\'</span>')
-            .replace(/\b(function|var|let|const|if|else|return|for|while|new|try|catch|async|await|window|document|Math|canvas|ctx)\b/g, '<span class="hl-key">$1</span>') // JS Keys
-            .replace(/\b(\d+)\b/g, '<span class="hl-num">$1</span>'); // Numbers
+        const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const pattern = /(&lt;!--[\s\S]*?--&gt;)|(".+?"|'.+?')|(&lt;\/?[a-z1-6]+|&gt;)|(\b(?:function|var|let|const|if|else|return|for|while|new|try|catch|async|await|window|document|Math|canvas|ctx)\b)|(\b\d+\b)|(\s[a-z-]+(?==))/gi;
+
+        return escaped.replace(pattern, (match, comm, str, tag, key, num, attr) => {
+            if (comm) return `<span class="hl-comm">${comm}</span>`;
+            if (str) return `<span class="hl-str">${str}</span>`;
+            if (tag) return `<span class="hl-tag">${tag}</span>`;
+            if (key) return `<span class="hl-key">${key}</span>`;
+            if (num) return `<span class="hl-num">${num}</span>`;
+            if (attr) return `<span class="hl-attr">${attr}</span>`;
+            return match;
+        });
     }
 
     function handleEditorInput() {
         const code = editor.value;
         highlightLayer.innerHTML = applyHighlighting(code) + "\n\n";
         miniContent.innerText = code;
-        sync();
+        syncSize();
         updateMinimapViewport();
     }
 
@@ -302,12 +206,10 @@
         updateMinimapViewport();
     }
 
-    /* INTERACTIVE MINIMAP LOGIC */
     function updateMinimapViewport() {
         const ratio = editor.clientHeight / editor.scrollHeight;
-        const topRatio = editor.scrollTop / editor.scrollHeight;
         miniView.style.height = Math.max(10, ratio * 100) + "%";
-        miniView.style.top = (topRatio * 100) + "%";
+        miniView.style.top = (editor.scrollTop / editor.scrollHeight * 100) + "%";
     }
 
     function mapSeek(e) {
@@ -322,47 +224,36 @@
         codePane.style.display = isOpen ? 'none' : 'flex';
         utilRow.style.display = isOpen ? 'none' : 'flex';
         devBtn.classList.toggle('active');
-        if (isOpen) {
-            world.srcdoc = editor.value;
-            setTimeout(() => { if(world.contentWindow) world.contentWindow.dispatchEvent(new Event('resize')); }, 50);
-        } else {
-            handleEditorInput();
-        }
+        if (isOpen) world.srcdoc = editor.value; else handleEditorInput();
     }
 
-    function sync() {
+    function syncSize() {
         const kb = (new Blob([editor.value]).size / 1024).toFixed(1);
         document.getElementById('size-tag').innerText = kb + " KB";
     }
 
     function save() {
-        const name = prompt("Name sequence:");
-        if(!name) return;
+        const name = prompt("Name sequence:"); if(!name) return;
         const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
         db[name] = { dna: editor.value, date: new Date().toLocaleDateString() };
         localStorage.setItem('K_DNA', JSON.stringify(db));
     }
 
-    function openArchive() {
-        document.getElementById('archive').style.display = 'flex';
-        renderArchiveList();
-    }
+    function openArchive() { document.getElementById('archive').style.display = 'flex'; renderArchiveList(); }
+    function closeArchive() { document.getElementById('archive').style.display = 'none'; }
 
     function renderArchiveList() {
+        const query = document.getElementById('archive-search').value.toLowerCase();
         const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
         const list = document.getElementById('list');
         list.innerHTML = '';
-        Object.keys(db).sort().forEach(n => {
+        Object.keys(db).filter(n => n.toLowerCase().includes(query)).sort().forEach(n => {
             const card = document.createElement('div');
             card.className = 'project-item';
             card.innerHTML = `
                 <div class="project-header">
                     <div><h4 style="margin:0;">${n}</h4><span style="font-size:10px; color:var(--text-dim);">${db[n].date}</span></div>
                     <button style="color:var(--accent); background:transparent; border:none; font-weight:700;" onclick="load('${n}')">RESTORE</button>
-                </div>
-                <div class="project-actions">
-                    <button class="action-btn" onclick="copySpecific('${n}')">COPY CODE</button>
-                    <button class="action-btn action-danger" onclick="deleteProject('${n}')">DELETE</button>
                 </div>
             `;
             list.appendChild(card);
@@ -375,58 +266,31 @@
         history.push(editor.value);
         world.srcdoc = editor.value;
         handleEditorInput();
-        sync();
         closeArchive();
         if(codePane.style.display === 'flex') toggleCode();
     }
 
-    function copySpecific(n) {
-        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-        navigator.clipboard.writeText(db[n].dna);
-    }
-
     function copyCurrent() { navigator.clipboard.writeText(editor.value); }
-
-    function deleteProject(n) {
-        if(confirm(`Erase ${n} permanently?`)) {
-            const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-            delete db[n];
-            localStorage.setItem('K_DNA', JSON.stringify(db));
-            renderArchiveList();
-        }
-    }
-
-    function closeArchive() { document.getElementById('archive').style.display = 'none'; }
-    function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; handleEditorInput(); sync(); world.srcdoc = editor.value; } }
-    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; highlightLayer.innerHTML = ""; miniContent.innerText = ""; world.srcdoc = ""; sync(); } }
+    function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; handleEditorInput(); world.srcdoc = editor.value; } }
+    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; handleEditorInput(); world.srcdoc = ""; } }
 
     async function evolve() {
-        const cmd = input.value.trim();
-        if(!cmd) return;
-        input.placeholder = "Writing Code...";
-        
-        const basePrompt = PROMPTS[modelSelector.value] || PROMPTS.architect;
-        const systemPrompt = basePrompt + " COMMAND: " + cmd;
-
+        const cmd = input.value.trim(); if(!cmd) return;
+        input.placeholder = "Forging DNA...";
+        const sys = PROMPTS[modelSelector.value] + " COMMAND: " + cmd;
         try {
-            const res = await fetch(WORKER_URL, {
-                method: "POST",
-                body: JSON.stringify({ source: editor.value, task: systemPrompt })
-            });
+            const res = await fetch(WORKER_URL, { method: "POST", body: JSON.stringify({ source: editor.value, task: sys }) });
             const data = await res.json();
             editor.value = data.response || data.html;
             history.push(editor.value);
             handleEditorInput();
-            sync();
             world.srcdoc = editor.value;
             if(codePane.style.display === 'flex') toggleCode();
-        } catch(e) { alert("Core Fault: Connectivity"); }
-        input.value = "";
-        input.style.height = 'auto'; 
-        input.placeholder = "Describe the magic...";
+        } catch(e) { alert("Core Fault"); }
+        input.value = ""; input.placeholder = "Describe the magic...";
     }
 
-    window.onload = () => { if(editor.value) { history.push(editor.value); handleEditorInput(); } sync(); };
+    window.onload = () => { if(editor.value) { history.push(editor.value); handleEditorInput(); } };
 </script>
 </body>
 </html>
