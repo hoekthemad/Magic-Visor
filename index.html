@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KODER PRO V43</title>
+    <style>
+        :root { 
+            --bg: #000000; --panel: #0a0a0a; --ui: #161616; --accent: #8ebfff; 
+            --border: #222222; --text-main: #ffffff; --text-dim: #555555; 
+            --danger: #ff5f5f; --font: -apple-system, system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { margin: 0; background: var(--bg); color: var(--text-main); font-family: var(--font); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        #stage { flex: 1; position: relative; z-index: 1; background: #000; }
+        #world { width: 100%; height: 100%; border: none; }
+
+        #code-pane { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 140px; 
+            background: var(--panel); z-index: 50; display: none; flex-direction: column;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        #editor { 
+            flex: 1; width: 100%; background: transparent; color: #d1d1d1; 
+            font-family: 'SF Mono', 'Menlo', monospace; padding: 20px; border: none; 
+            font-size: 15px; line-height: 1.6; resize: none; 
+        }
+
+        #control-complex { position: relative; z-index: 100; background: var(--panel); border-top: 1px solid var(--border); }
+
+        #utility-row {
+            display: none; padding: 8px 15px; background: var(--ui);
+            border-bottom: 1px solid var(--border); justify-content: space-between; align-items: center;
+        }
+        .v-tag { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); margin-right: 10px; }
+        
+        #model-info { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        #model-info b { color: var(--accent); }
+
+        #model-selector {
+            background: #1a1a1a; color: var(--accent); border: 1px solid var(--border);
+            font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px;
+            text-transform: uppercase; appearance: none; margin-left: 10px;
+        }
+
+        .util-group { display: flex; gap: 18px; align-items: center; }
+
+        #command-dock { display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px 5px; }
+
+        .dock-btn {
+            background: transparent; border: none; display: flex; flex-direction: column; 
+            align-items: center; gap: 4px; color: var(--text-dim); transition: 0.2s;
+        }
+        .dock-btn svg { width: 22px; height: 22px; fill: currentColor; }
+        .dock-btn span { font-size: 9px; font-weight: 700; text-transform: uppercase; }
+        .dock-btn.active { color: var(--accent); }
+
+        #input-dock { 
+            padding: 0 15px calc(15px + env(safe-area-inset-bottom)); 
+            display: flex; align-items: flex-end; gap: 10px; 
+        }
+        #input-container { 
+            flex: 1; background: var(--ui); border: 1px solid var(--border); 
+            border-radius: 18px; padding: 12px 16px; min-height: 48px; max-height: 150px;
+            display: flex; align-items: center;
+        }
+        #input { 
+            flex: 1; background: transparent; border: none; color: #fff; 
+            font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto;
+            max-height: 120px; padding: 0;
+        }
+        #go { 
+            background: var(--accent); border: none; width: 44px; height: 44px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; margin-bottom: 2px;
+        }
+
+        #archive {
+            position: fixed; inset: 0; background: var(--bg); z-index: 200;
+            display: none; flex-direction: column; padding: calc(40px + env(safe-area-inset-top)) 24px 40px;
+        }
+        .project-item {
+            background: var(--panel); padding: 18px; border-radius: 16px; margin-bottom: 12px;
+            border: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px;
+        }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .project-actions { display: flex; gap: 8px; border-top: 1px solid #1a1a1a; padding-top: 12px; justify-content: flex-end; }
+        .action-btn { background: #1a1a1a; border: none; color: #aaa; padding: 8px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; }
+    </style>
+</head>
+<body>
+
+<div id="stage"><iframe id="world"></iframe></div>
+
+<div id="code-pane">
+    <textarea id="editor" spellcheck="false" oninput="sync()"></textarea>
+</div>
+
+<div id="control-complex">
+    <div id="utility-row">
+        <div style="display:flex; align-items:center;">
+            <span class="v-tag" id="size-tag">0.0 KB</span>
+            <div id="model-info"><b>ARC:</b> Structure</div>
+            <select id="model-selector" onchange="updateModelInfo()">
+                <option value="architect">Architect</option>
+                <option value="technologist">Technologist</option>
+                <option value="engineer">Engineer</option>
+                <option value="analyst">Analyst</option>
+                <option value="designer">Designer</option>
+            </select>
+        </div>
+        <div class="util-group">
+            <button class="dock-btn" onclick="undo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></button>
+            <button class="dock-btn" onclick="copyCurrent()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+            <button class="dock-btn" onclick="wipe()" style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+        </div>
+    </div>
+
+    <nav id="command-dock">
+        <button class="dock-btn" id="btn-dev" onclick="toggleCode()">
+            <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+            <span>Develop</span>
+        </button>
+        <button class="dock-btn" onclick="openArchive()">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+            <span>Archive</span>
+        </button>
+        <button class="dock-btn" onclick="save()">
+            <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            <span>Save</span>
+        </button>
+    </nav>
+
+    <div id="input-dock">
+        <div id="input-container">
+            <textarea id="input" rows="1" placeholder="Describe the magic..." oninput="autoExpand(this)"></textarea>
+        </div>
+        <button id="go" onclick="evolve()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
+</div>
+
+<div id="archive">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px;">
+        <h2 style="margin:0; font-size: 28px;">Archive</h2>
+        <button style="background:transparent; border:none; color:var(--accent); font-weight:800;" onclick="closeArchive()">DONE</button>
+    </div>
+    <div id="list" style="overflow-y:auto; flex: 1;"></div>
+</div>
+
+<script>
+    const editor = document.getElementById('editor');
+    const world = document.getElementById('world');
+    const input = document.getElementById('input');
+    const codePane = document.getElementById('code-pane');
+    const utilRow = document.getElementById('utility-row');
+    const devBtn = document.getElementById('btn-dev');
+    const modelSelector = document.getElementById('model-selector');
+    const modelInfo = document.getElementById('model-info');
+    let history = [];
+
+        const PROMPTS = {
+        architect: "EXPERT GAME ARCHITECT: Return a SINGLE valid HTML5 file. Use <canvas> for graphics. No emojis. MANDATORY: Use Touch Events for all inputs. Ensure the canvas scale matches window.innerWidth/Height for the mobile viewport. If updating code, ensure memory efficiency (backward loop splicing, cap objects). Use trail effects via alpha fillRect(0,0,w,h,0.1).",
+        technologist: "CREATIVE TECHNOLOGIST: Focus on high-end visuals, 'juice', and aesthetics. MANDATORY: All interactions must be Touch-based. Ensure canvas fills the mobile viewport (innerWidth/Height). Use particle systems, neon glows, and smooth easing animations. Return a single HTML5 file with <canvas>.",
+        engineer: "PERFORMANCE ENGINEER: Focus on raw speed and optimization. MANDATORY: Optimize for mobile touch latency. Ensure responsive canvas viewport. Use spatial partitioning for collisions, object pooling, and minimize draw calls. Return a single HTML5 file with <canvas>.",
+        analyst: "LOGIC ANALYST: Focus on complex mathematics, debugging, and data structures. MANDATORY: Fix logic for Touch Event coordinate mapping. Ensure viewport calculations are precise for mobile displays. Fix logic errors and optimize algorithms without changing the visual style. Return a single HTML5 file with <canvas>.",
+        designer: "UI/UX DESIGNER: Focus on the interface, touch responsiveness, menu systems, and layout. MANDATORY: Design for 'Thumb Zones' and mobile ergonomics. Ensure canvas is perfectly responsive to device orientation. Ensure the game looks professional and feels good to navigate. Return a single HTML5 file with <canvas>."
+    };
+
+
+    const DESCRIPTIONS = {
+        architect: "<b>ARCH:</b> Structure",
+        technologist: "<b>TECH:</b> Visual Juice",
+        engineer: "<b>ENG:</b> Performance",
+        analyst: "<b>ANA:</b> Logic/Debug",
+        designer: "<b>DES:</b> UI/UX Design"
+    };
+
+    function updateModelInfo() {
+        modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value];
+    }
+
+    function autoExpand(el) {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    }
+
+    function toggleCode() {
+        const isOpen = codePane.style.display === 'flex';
+        codePane.style.display = isOpen ? 'none' : 'flex';
+        utilRow.style.display = isOpen ? 'none' : 'flex';
+        devBtn.classList.toggle('active');
+        if (isOpen) {
+            world.srcdoc = editor.value;
+            setTimeout(() => { if(world.contentWindow) world.contentWindow.dispatchEvent(new Event('resize')); }, 50);
+        }
+    }
+
+    function sync() {
+        const kb = (new Blob([editor.value]).size / 1024).toFixed(1);
+        document.getElementById('size-tag').innerText = kb + " KB";
+    }
+
+    function save() {
+        const name = prompt("Name sequence:");
+        if(!name) return;
+        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
+        db[name] = { dna: editor.value, date: new Date().toLocaleDateString() };
+        localStorage.setItem('K_DNA', JSON.stringify(db));
+    }
+
+    function openArchive() {
+        document.getElementById('archive').style.display = 'flex';
+        renderArchiveList();
+    }
+
+    function renderArchiveList() {
+        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+        Object.keys(db).sort().forEach(n => {
+            const card = document.createElement('div');
+            card.className = 'project-item';
+            card.innerHTML = `
+                <div class="project-header">
+                    <div><h4 style="margin:0;">${n}</h4><span style="font-size:10px; color:var(--text-dim);">${db[n].date}</span></div>
+                    <button style="color:var(--accent); background:transparent; border:none; font-weight:700;" onclick="load('${n}')">RESTORE</button>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn" onclick="copySpecific('${n}')">COPY CODE</button>
+                    <button class="action-btn action-danger" onclick="deleteProject('${n}')">DELETE</button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function load(n) {
+        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
+        editor.value = db[n].dna;
+        history.push(editor.value);
+        world.srcdoc = editor.value;
+        sync();
+        closeArchive();
+        if(codePane.style.display === 'flex') toggleCode();
+    }
+
+    function copySpecific(n) {
+        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
+        navigator.clipboard.writeText(db[n].dna);
+    }
+
+    function copyCurrent() { navigator.clipboard.writeText(editor.value); }
+
+    function deleteProject(n) {
+        if(confirm(`Erase ${n} permanently?`)) {
+            const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
+            delete db[n];
+            localStorage.setItem('K_DNA', JSON.stringify(db));
+            renderArchiveList();
+        }
+    }
+
+    function closeArchive() { document.getElementById('archive').style.display = 'none'; }
+    function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; sync(); world.srcdoc = editor.value; } }
+    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; world.srcdoc = ""; sync(); } }
+
+    async function evolve() {
+        const cmd = input.value.trim();
+        if(!cmd) return;
+        input.placeholder = "Writing Code...";
+        
+        const basePrompt = PROMPTS[modelSelector.value] || PROMPTS.architect;
+        const systemPrompt = basePrompt + " COMMAND: " + cmd;
+
+        try {
+            const res = await fetch("https://monolith-worker.sweydev.workers.dev", {
+                method: "POST",
+                body: JSON.stringify({ source: editor.value, task: systemPrompt })
+            });
+            const data = await res.json();
+            editor.value = data.response || data.html;
+            history.push(editor.value);
+            sync();
+            world.srcdoc = editor.value;
+            if(codePane.style.display === 'flex') toggleCode();
+        } catch(e) { alert("Core Fault: Connectivity"); }
+        input.value = "";
+        input.style.height = 'auto'; 
+        input.placeholder = "Describe the magic...";
+    }
+
+    window.onload = () => { if(editor.value) history.push(editor.value); sync(); };
+</script>
+</body>
+</html>
