@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>KODER PRO V43</title>
     <style>
         :root { 
@@ -104,7 +105,7 @@
     <div id="utility-row">
         <div style="display:flex; align-items:center;">
             <span class="v-tag" id="size-tag">0.0 KB</span>
-            <div id="model-info"><b>ARC:</b> Structure</div>
+            <div id="model-info"><b>ARCH:</b> Structure</div>
             <select id="model-selector" onchange="updateModelInfo()">
                 <option value="architect">Architect</option>
                 <option value="technologist">Technologist</option>
@@ -164,14 +165,16 @@
     const modelInfo = document.getElementById('model-info');
     let history = [];
 
-        const PROMPTS = {
+    // Stealth URL Encoding
+    const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
+
+    const PROMPTS = {
         architect: "EXPERT GAME ARCHITECT: Return a SINGLE valid HTML5 file. Use <canvas> for graphics. No emojis. MANDATORY: Use Touch Events for all inputs. Ensure the canvas scale matches window.innerWidth/Height for the mobile viewport. If updating code, ensure memory efficiency (backward loop splicing, cap objects). Use trail effects via alpha fillRect(0,0,w,h,0.1).",
         technologist: "CREATIVE TECHNOLOGIST: Focus on high-end visuals, 'juice', and aesthetics. MANDATORY: All interactions must be Touch-based. Ensure canvas fills the mobile viewport (innerWidth/Height). Use particle systems, neon glows, and smooth easing animations. Return a single HTML5 file with <canvas>.",
         engineer: "PERFORMANCE ENGINEER: Focus on raw speed and optimization. MANDATORY: Optimize for mobile touch latency. Ensure responsive canvas viewport. Use spatial partitioning for collisions, object pooling, and minimize draw calls. Return a single HTML5 file with <canvas>.",
         analyst: "LOGIC ANALYST: Focus on complex mathematics, debugging, and data structures. MANDATORY: Fix logic for Touch Event coordinate mapping. Ensure viewport calculations are precise for mobile displays. Fix logic errors and optimize algorithms without changing the visual style. Return a single HTML5 file with <canvas>.",
         designer: "UI/UX DESIGNER: Focus on the interface, touch responsiveness, menu systems, and layout. MANDATORY: Design for 'Thumb Zones' and mobile ergonomics. Ensure canvas is perfectly responsive to device orientation. Ensure the game looks professional and feels good to navigate. Return a single HTML5 file with <canvas>."
     };
-
 
     const DESCRIPTIONS = {
         architect: "<b>ARCH:</b> Structure",
@@ -279,7 +282,7 @@
         const systemPrompt = basePrompt + " COMMAND: " + cmd;
 
         try {
-            const res = await fetch("https://monolith-worker.sweydev.workers.dev", {
+            const res = await fetch(WORKER_URL, {
                 method: "POST",
                 body: JSON.stringify({ source: editor.value, task: systemPrompt })
             });
