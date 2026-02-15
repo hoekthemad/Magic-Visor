@@ -10,6 +10,7 @@
             --bg: #000000; --panel: #0a0a0a; --ui: #161616; --accent: #8ebfff; 
             --border: #222222; --text-main: #ffffff; --text-dim: #555555; 
             --danger: #ff5f5f; --font: -apple-system, system-ui, sans-serif;
+            --code-font: 'SF Mono', 'Menlo', monospace;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -18,6 +19,7 @@
         #stage { flex: 1; position: relative; z-index: 1; background: #000; }
         #world { width: 100%; height: 100%; border: none; }
 
+        /* EDITOR PANE & LAYERING */
         #code-pane { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 140px; 
             background: var(--panel); z-index: 50; display: none; flex-direction: column;
@@ -25,11 +27,66 @@
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        #editor { 
-            flex: 1; width: 100%; background: transparent; color: #d1d1d1; 
-            font-family: 'SF Mono', 'Menlo', monospace; padding: 20px; border: none; 
-            font-size: 15px; line-height: 1.6; resize: none; 
+        #editor-container {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
         }
+
+        #editor, #highlight-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            margin: 0; padding: 20px;
+            padding-bottom: 150px; /* Allows scrolling past the end */
+            font-family: var(--code-font);
+            font-size: 15px;
+            line-height: 1.6;
+            tab-size: 4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #editor {
+            background: transparent;
+            color: transparent; /* Hide raw text, show highlight layer instead */
+            caret-color: #fff;
+            resize: none;
+            z-index: 2;
+        }
+
+        #highlight-layer {
+            z-index: 1;
+            color: #d1d1d1;
+            pointer-events: none;
+            display: block;
+        }
+
+        /* MINIMAP */
+        #minimap {
+            position: absolute;
+            top: 10px; right: 5px; width: 40px; height: calc(100% - 20px);
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+            z-index: 10;
+            pointer-events: none;
+            overflow: hidden;
+            font-size: 2px;
+            line-height: 2px;
+            padding: 2px;
+            opacity: 0.5;
+            color: var(--accent);
+        }
+
+        /* SYNTAX COLORS */
+        .hl-tag { color: var(--accent); }
+        .hl-attr { color: #ffcc66; }
+        .hl-str { color: #a8e6cf; }
+        .hl-comm { color: #555555; font-style: italic; }
+        .hl-num { color: #ff9f43; }
 
         #control-complex { position: relative; z-index: 100; background: var(--panel); border-top: 1px solid var(--border); }
 
@@ -98,7 +155,11 @@
 <div id="stage"><iframe id="world"></iframe></div>
 
 <div id="code-pane">
-    <textarea id="editor" spellcheck="false" oninput="sync()"></textarea>
+    <div id="editor-container">
+        <div id="minimap"></div>
+        <div id="highlight-layer" aria-hidden="true"></div>
+        <textarea id="editor" spellcheck="false" oninput="sync(); handleEditorInput()" onscroll="syncScroll()"></textarea>
+    </div>
 </div>
 
 <div id="control-complex">
@@ -156,6 +217,8 @@
 
 <script>
     const editor = document.getElementById('editor');
+    const highlightLayer = document.getElementById('highlight-layer');
+    const minimap = document.getElementById('minimap');
     const world = document.getElementById('world');
     const input = document.getElementById('input');
     const codePane = document.getElementById('code-pane');
@@ -165,7 +228,6 @@
     const modelInfo = document.getElementById('model-info');
     let history = [];
 
-    // Stealth URL Encoding
     const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
 
     const PROMPTS = {
@@ -193,6 +255,32 @@
         el.style.height = el.scrollHeight + 'px';
     }
 
+    /* SYNTAX HIGHLIGHTING ENGINE */
+    function applyHighlighting(code) {
+        return code
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") // Escape
+            .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="hl-comm">$1</span>') // Comments
+            .replace(/(&lt;\/?[a-z1-6]+)/gi, '<span class="hl-tag">$1</span>') // Tags
+            .replace(/(\s)([a-z-]+)(?==)/gi, '$1<span class="hl-attr">$2</span>') // Attributes
+            .replace(/"([^"]*)"/g, '<span class="hl-str">"$1"</span>') // Double strings
+            .replace(/'([^']*)'/g, '<span class="hl-str">\'$1\'</span>') // Single strings
+            .replace(/\b(\d+)\b/g, '<span class="hl-num">$1</span>'); // Numbers
+    }
+
+    function handleEditorInput() {
+        const code = editor.value;
+        highlightLayer.innerHTML = applyHighlighting(code) + "\n\n"; // Buffer for bottom
+        minimap.innerText = code;
+        sync();
+    }
+
+    function syncScroll() {
+        highlightLayer.scrollTop = editor.scrollTop;
+        highlightLayer.scrollLeft = editor.scrollLeft;
+        // Simple minimap scroll follow
+        minimap.scrollTop = (editor.scrollTop / editor.scrollHeight) * minimap.scrollHeight;
+    }
+
     function toggleCode() {
         const isOpen = codePane.style.display === 'flex';
         codePane.style.display = isOpen ? 'none' : 'flex';
@@ -200,6 +288,7 @@
         devBtn.classList.toggle('active');
         if (isOpen) {
             world.srcdoc = editor.value;
+            handleEditorInput(); // Refresh highlights
             setTimeout(() => { if(world.contentWindow) world.contentWindow.dispatchEvent(new Event('resize')); }, 50);
         }
     }
@@ -248,6 +337,7 @@
         editor.value = db[n].dna;
         history.push(editor.value);
         world.srcdoc = editor.value;
+        handleEditorInput();
         sync();
         closeArchive();
         if(codePane.style.display === 'flex') toggleCode();
@@ -270,8 +360,8 @@
     }
 
     function closeArchive() { document.getElementById('archive').style.display = 'none'; }
-    function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; sync(); world.srcdoc = editor.value; } }
-    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; world.srcdoc = ""; sync(); } }
+    function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; handleEditorInput(); sync(); world.srcdoc = editor.value; } }
+    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; highlightLayer.innerHTML = ""; minimap.innerText = ""; world.srcdoc = ""; sync(); } }
 
     async function evolve() {
         const cmd = input.value.trim();
@@ -289,6 +379,7 @@
             const data = await res.json();
             editor.value = data.response || data.html;
             history.push(editor.value);
+            handleEditorInput();
             sync();
             world.srcdoc = editor.value;
             if(codePane.style.display === 'flex') toggleCode();
@@ -298,7 +389,7 @@
         input.placeholder = "Describe the magic...";
     }
 
-    window.onload = () => { if(editor.value) history.push(editor.value); sync(); };
+    window.onload = () => { if(editor.value) { history.push(editor.value); handleEditorInput(); } sync(); };
 </script>
 </body>
 </html>
