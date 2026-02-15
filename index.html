@@ -19,7 +19,6 @@
         #stage { flex: 1; position: relative; z-index: 1; background: #000; }
         #world { width: 100%; height: 100%; border: none; }
 
-        /* EDITOR PANE & LAYERING */
         #code-pane { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 140px; 
             background: var(--panel); z-index: 50; display: none; flex-direction: column;
@@ -29,7 +28,6 @@
         
         #editor-container { position: relative; flex: 1; overflow: hidden; display: flex; }
 
-        /* CRITICAL SYNC: Fixed alignment and formatting */
         #editor, #highlight-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             margin: 0; padding: 20px 80px 300px 20px;
@@ -38,13 +36,18 @@
             border: none; overflow: auto; -webkit-font-smoothing: antialiased;
         }
 
-        #editor { 
-            background: transparent; color: transparent; caret-color: #fff; 
-            z-index: 2; resize: none; -webkit-text-fill-color: transparent; 
-        }
+        #editor { background: transparent; color: transparent; caret-color: #fff; z-index: 2; resize: none; -webkit-text-fill-color: transparent; }
         #highlight-layer { z-index: 1; color: #abb2bf; pointer-events: none; display: block; }
 
-        /* MINIMAP */
+        #log-pane {
+            background: var(--ui); border-top: 1px solid var(--border);
+            height: 0; overflow: hidden; transition: height 0.3s ease;
+            font-family: var(--code-font); font-size: 11px; color: var(--accent);
+            padding: 0 15px; position: relative; z-index: 90;
+        }
+        #log-pane.open { height: 120px; padding: 12px 15px; overflow-y: auto; }
+        .log-header { font-size: 9px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+
         #minimap-gutter {
             position: absolute; top: 0; right: 0; width: 60px; height: 100%;
             background: rgba(0,0,0,0.4); border-left: 1px solid var(--border);
@@ -57,7 +60,6 @@
             border-bottom: 1px solid var(--accent); pointer-events: none;
         }
 
-        /* SYNTAX THEME */
         .hl-comm { color: #5c6370; font-style: italic; }
         .hl-str { color: #a8e6cf; }
         .hl-tag { color: #8ebfff; }
@@ -84,7 +86,6 @@
         #input { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto; }
         #go { background: var(--accent); border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* ARCHIVE & SEARCH */
         #archive { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; padding: calc(40px + env(safe-area-inset-top)) 24px 40px; }
         #archive-search { background: var(--ui); border: 1px solid var(--border); color: #fff; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 14px; width: 100%; }
         .project-item { background: var(--panel); padding: 18px; border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
@@ -107,6 +108,17 @@
 </div>
 
 <div id="control-complex">
+    <div id="log-pane">
+        <div class="log-header">
+            <span>Event Log</span>
+            <div style="display:flex; gap:15px;">
+                <span onclick="clearLog()" style="color:var(--danger)">Clear</span>
+                <span onclick="toggleLog()" style="color:var(--accent)">Close</span>
+            </div>
+        </div>
+        <div id="log-content">System initialized. Awaiting command...</div>
+    </div>
+
     <div id="utility-row">
         <div style="display:flex; align-items:center;">
             <span class="v-tag" id="size-tag">0.0 KB</span>
@@ -120,6 +132,7 @@
             </select>
         </div>
         <div class="util-group" style="display:flex; gap:18px;">
+            <button class="dock-btn" onclick="toggleLog()"><svg viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 20V5h6v6h6v9H6zM8 12v2h8v-2H8zm0 4v2h5v-2H8z"/></svg></button>
             <button class="dock-btn" onclick="undo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></button>
             <button class="dock-btn" onclick="copyCurrent()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
             <button class="dock-btn" onclick="wipe()" style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
@@ -159,28 +172,30 @@
     const devBtn = document.getElementById('btn-dev');
     const modelSelector = document.getElementById('model-selector');
     const modelInfo = document.getElementById('model-info');
+    const logPane = document.getElementById('log-pane');
+    const logContent = document.getElementById('log-content');
     let history = [];
 
     const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
 
     const PROMPTS = {
-        architect: "MANDATORY: Return a SINGLE HTML5 file. ABSOLUTELY NO 800x600 containers. Use <canvas> and CSS: body{margin:0;overflow:hidden;} canvas{width:100vw;height:100vh;display:block;touch-action:none;}. Map touch coordinates using canvas.getBoundingClientRect(). No emojis.",
-        technologist: "MANDATORY: High-end visuals. No fixed 800x600 boxes. Canvas MUST fill 100vw/100vh. No margins/scrollbars. Touch-based input only. No emojis.",
-        engineer: "MANDATORY: Performance focus. Responsive 100vw/100vh canvas. No fixed width/height containers. No emojis.",
-        analyst: "MANDATORY: Logic fix. Coordinate mapping for mobile touch. Eliminate fixed 800x600 containers. No emojis.",
-        designer: "MANDATORY: UI focus. 100vw/100vh canvas. Thumb-friendly controls. No emojis."
+        architect: "SENIOR SOFTWARE ARCHITECT. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. DO NOT put logic logs anywhere else. Code must be clean and modular. NO emojis.",
+        technologist: "CREATIVE TECHNOLOGIST. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Detail the procedural canvas math. NO emojis.",
+        engineer: "PRINCIPAL SYSTEMS ENGINEER. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Focus on performance and Delta-Time. NO emojis.",
+        analyst: "QA & SYSTEMS ANALYST. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Audit code for mobile-input stability. NO emojis.",
+        designer: "LEAD UX DESIGNER. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Explain the UI hit-box logic. NO emojis."
     };
 
     const DESCRIPTIONS = { architect: "<b>ARCH:</b> Structure", technologist: "<b>TECH:</b> Visual Juice", engineer: "<b>ENG:</b> Performance", analyst: "<b>ANA:</b> Logic", designer: "<b>DES:</b> UI/UX" };
 
     function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value]; }
     function autoExpand(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+    function toggleLog() { logPane.classList.toggle('open'); }
+    function clearLog() { logContent.innerText = "Log cleared."; }
 
-    /* SINGLE-PASS HIGHLIGHTER: Stops "Highlighting the Highlights" */
     function applyHighlighting(code) {
         const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const pattern = /(&lt;!--[\s\S]*?--&gt;)|(".+?"|'.+?')|(&lt;\/?[a-z1-6]+|&gt;)|(\b(?:function|var|let|const|if|else|return|for|while|new|try|catch|async|await|window|document|Math|canvas|ctx)\b)|(\b\d+\b)|(\s[a-z-]+(?==))/gi;
-
         return escaped.replace(pattern, (match, comm, str, tag, key, num, attr) => {
             if (comm) return `<span class="hl-comm">${comm}</span>`;
             if (str) return `<span class="hl-str">${str}</span>`;
@@ -281,7 +296,26 @@
         try {
             const res = await fetch(WORKER_URL, { method: "POST", body: JSON.stringify({ source: editor.value, task: sys }) });
             const data = await res.json();
-            editor.value = data.response || data.html;
+            let newCode = data.response || data.html;
+
+            // HARDENED LOG EXTRACTION: Global multiline match for AI_LOG blocks
+            const logRegex = /\/\*[\s]*AI_LOG[\s\S]*?\*\//gi;
+            const matches = newCode.match(logRegex);
+            
+            if(matches) {
+                // Extract clean text from the first match
+                const logText = matches[0].replace(/\/\*[\s]*AI_LOG/i, "").replace(/\*\/$/, "").trim();
+                logContent.innerText = logText;
+                
+                // Scrub ALL log blocks from the code so they don't appear in the editor
+                newCode = newCode.replace(logRegex, "").trim();
+                
+                if(!logPane.classList.contains('open')) toggleLog();
+            } else {
+                logContent.innerText = "Analysis complete. Source sanitized.";
+            }
+
+            editor.value = newCode;
             history.push(editor.value);
             handleEditorInput();
             world.srcdoc = editor.value;
