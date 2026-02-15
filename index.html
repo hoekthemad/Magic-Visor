@@ -38,24 +38,25 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             margin: 0; padding: 20px;
-            padding-bottom: 150px; /* Allows scrolling past the end */
+            padding-right: 80px; /* Room for minimap */
+            padding-bottom: 250px; /* FIXED: Scroll the bottom to the top */
             font-family: var(--code-font);
             font-size: 15px;
             line-height: 1.6;
             tab-size: 4;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            white-space: pre; /* Changed to pre to prevent wrap-desync */
+            word-wrap: normal;
             border: none;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: auto;
         }
 
         #editor {
             background: transparent;
-            color: transparent; /* Hide raw text, show highlight layer instead */
+            color: transparent;
             caret-color: #fff;
             resize: none;
             z-index: 2;
+            -webkit-text-fill-color: transparent;
         }
 
         #highlight-layer {
@@ -65,28 +66,43 @@
             display: block;
         }
 
-        /* MINIMAP */
-        #minimap {
+        /* IMPROVED MINIMAP */
+        #minimap-gutter {
             position: absolute;
-            top: 10px; right: 5px; width: 40px; height: calc(100% - 20px);
-            background: rgba(255,255,255,0.03);
-            border-radius: 4px;
+            top: 0; right: 0; width: 60px; height: 100%;
+            background: rgba(0,0,0,0.4);
+            border-left: 1px solid var(--border);
             z-index: 10;
-            pointer-events: none;
             overflow: hidden;
-            font-size: 2px;
-            line-height: 2px;
-            padding: 2px;
-            opacity: 0.5;
-            color: var(--accent);
+            touch-action: none;
+        }
+
+        #minimap-content {
+            font-size: 3px;
+            line-height: 3px;
+            padding: 5px;
+            white-space: pre;
+            color: var(--text-dim);
+            opacity: 0.4;
+            transform-origin: top left;
+        }
+
+        #minimap-viewport {
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            background: rgba(142, 191, 255, 0.15);
+            border-top: 1px solid var(--accent);
+            border-bottom: 1px solid var(--accent);
+            pointer-events: none;
         }
 
         /* SYNTAX COLORS */
-        .hl-tag { color: var(--accent); }
-        .hl-attr { color: #ffcc66; }
-        .hl-str { color: #a8e6cf; }
-        .hl-comm { color: #555555; font-style: italic; }
-        .hl-num { color: #ff9f43; }
+        .hl-tag { color: #8ebfff; } /* Cyan Tags */
+        .hl-attr { color: #ffcc66; } /* Yellow Attributes */
+        .hl-str { color: #a8e6cf; } /* Green Strings */
+        .hl-comm { color: #5c6370; font-style: italic; } /* Grey Comments */
+        .hl-num { color: #f78c6c; } /* Orange Numbers */
+        .hl-key { color: #c792ea; } /* Purple Keywords */
 
         #control-complex { position: relative; z-index: 100; background: var(--panel); border-top: 1px solid var(--border); }
 
@@ -156,9 +172,12 @@
 
 <div id="code-pane">
     <div id="editor-container">
-        <div id="minimap"></div>
         <div id="highlight-layer" aria-hidden="true"></div>
         <textarea id="editor" spellcheck="false" oninput="sync(); handleEditorInput()" onscroll="syncScroll()"></textarea>
+        <div id="minimap-gutter" onpointerdown="mapSeek(event)" onpointermove="mapSeek(event)">
+            <div id="minimap-content"></div>
+            <div id="minimap-viewport"></div>
+        </div>
     </div>
 </div>
 
@@ -218,7 +237,8 @@
 <script>
     const editor = document.getElementById('editor');
     const highlightLayer = document.getElementById('highlight-layer');
-    const minimap = document.getElementById('minimap');
+    const miniContent = document.getElementById('minimap-content');
+    const miniView = document.getElementById('minimap-viewport');
     const world = document.getElementById('world');
     const input = document.getElementById('input');
     const codePane = document.getElementById('code-pane');
@@ -255,30 +275,46 @@
         el.style.height = el.scrollHeight + 'px';
     }
 
-    /* SYNTAX HIGHLIGHTING ENGINE */
+    /* ENHANCED HIGHLIGHTING ENGINE */
     function applyHighlighting(code) {
         return code
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") // Escape
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") 
             .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="hl-comm">$1</span>') // Comments
             .replace(/(&lt;\/?[a-z1-6]+)/gi, '<span class="hl-tag">$1</span>') // Tags
             .replace(/(\s)([a-z-]+)(?==)/gi, '$1<span class="hl-attr">$2</span>') // Attributes
-            .replace(/"([^"]*)"/g, '<span class="hl-str">"$1"</span>') // Double strings
-            .replace(/'([^']*)'/g, '<span class="hl-str">\'$1\'</span>') // Single strings
+            .replace(/"([^"]*)"/g, '<span class="hl-str">"$1"</span>') // Strings
+            .replace(/'([^']*)'/g, '<span class="hl-str">\'$1\'</span>')
+            .replace(/\b(function|var|let|const|if|else|return|for|while|new|try|catch|async|await|window|document|Math|canvas|ctx)\b/g, '<span class="hl-key">$1</span>') // JS Keys
             .replace(/\b(\d+)\b/g, '<span class="hl-num">$1</span>'); // Numbers
     }
 
     function handleEditorInput() {
         const code = editor.value;
-        highlightLayer.innerHTML = applyHighlighting(code) + "\n\n"; // Buffer for bottom
-        minimap.innerText = code;
+        highlightLayer.innerHTML = applyHighlighting(code) + "\n\n";
+        miniContent.innerText = code;
         sync();
+        updateMinimapViewport();
     }
 
     function syncScroll() {
         highlightLayer.scrollTop = editor.scrollTop;
         highlightLayer.scrollLeft = editor.scrollLeft;
-        // Simple minimap scroll follow
-        minimap.scrollTop = (editor.scrollTop / editor.scrollHeight) * minimap.scrollHeight;
+        updateMinimapViewport();
+    }
+
+    /* INTERACTIVE MINIMAP LOGIC */
+    function updateMinimapViewport() {
+        const ratio = editor.clientHeight / editor.scrollHeight;
+        const topRatio = editor.scrollTop / editor.scrollHeight;
+        miniView.style.height = Math.max(10, ratio * 100) + "%";
+        miniView.style.top = (topRatio * 100) + "%";
+    }
+
+    function mapSeek(e) {
+        if (e.buttons !== 1 && e.type !== 'pointerdown') return;
+        const rect = document.getElementById('minimap-gutter').getBoundingClientRect();
+        const pos = (e.clientY - rect.top) / rect.height;
+        editor.scrollTop = (pos * editor.scrollHeight) - (editor.clientHeight / 2);
     }
 
     function toggleCode() {
@@ -288,8 +324,9 @@
         devBtn.classList.toggle('active');
         if (isOpen) {
             world.srcdoc = editor.value;
-            handleEditorInput(); // Refresh highlights
             setTimeout(() => { if(world.contentWindow) world.contentWindow.dispatchEvent(new Event('resize')); }, 50);
+        } else {
+            handleEditorInput();
         }
     }
 
@@ -361,7 +398,7 @@
 
     function closeArchive() { document.getElementById('archive').style.display = 'none'; }
     function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; handleEditorInput(); sync(); world.srcdoc = editor.value; } }
-    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; highlightLayer.innerHTML = ""; minimap.innerText = ""; world.srcdoc = ""; sync(); } }
+    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; highlightLayer.innerHTML = ""; miniContent.innerText = ""; world.srcdoc = ""; sync(); } }
 
     async function evolve() {
         const cmd = input.value.trim();
