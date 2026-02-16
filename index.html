@@ -190,23 +190,22 @@
 
     const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
 
-    const GLOBAL_CONSTRAINTS = "STRICT RULES: 1. NO EMOJIS. 2. Use SVG or Canvas for icons. 3. Output COMPLETE HTML5 documents only. 4. No markdown backticks. 5. Include /* AI_LOG ... */ at the very end. 6. Match Swey IDE aesthetic (Dark, #000 background, #8ebfff accent). 7. No placeholder comments. 8. No incomplete sections. 9. No TODO markers. 10. No external frameworks or CDNs unless explicitly requested.";
+    const GLOBAL_CONSTRAINTS = "SYSTEM OVERRIDE: 1. NO EMOJIS (Strict). 2. ICONS: Use SVG paths or Canvas drawing commands only. 3. OUTPUT: Single, raw HTML5 file. 4. NO MARKDOWN (Do not use ```html wrappers). 5. LOGGING: You MUST append a block comment /* AI_LOG [Chain of Thought Reasoning] */ at the very end of the file. 6. AESTHETIC: Deep dark theme (#000000 bg, #8ebfff accent, #161616 panels).";
 
     const PROMPTS = {
-        architect: `ROLE: SENIOR SOFTWARE ARCHITECT. ${GLOBAL_CONSTRAINTS} Focus on modular components, strict separation of concerns, CSS variables for all theme tokens, and semantic HTML5 structure.`,
-        technologist: `ROLE: CREATIVE TECHNOLOGIST. ${GLOBAL_CONSTRAINTS} Focus on high-performance Canvas 2D/WebGL rendering, procedural math-driven systems, deterministic animation loops, and responsive coordinate normalization.`,
-        engineer: `ROLE: PRINCIPAL SYSTEMS ENGINEER. ${GLOBAL_CONSTRAINTS} Focus on 60fps locked execution using delta-time, memory efficiency, minimized allocations, zero DOM thrashing, and predictable state management.`,
-        analyst: `ROLE: QA ANALYST. ${GLOBAL_CONSTRAINTS} Focus on defensive coding, exhaustive input validation, mobile touch edge-case handling, runtime error containment, and fallback safety mechanisms.`,
-        designer: `ROLE: LEAD UX DESIGNER. ${GLOBAL_CONSTRAINTS} Focus on refined micro-interactions, high-contrast accessibility (WCAG compliant), fluid typography scaling, and consistent visual feedback systems.`
+        architect: `ROLE: SENIOR SOFTWARE ARCHITECT. ${GLOBAL_CONSTRAINTS} MANDATE: Build a modular, event-driven system. usage of 'class' structures is preferred. SEPARATE state logic from rendering logic.`,
+        technologist: `ROLE: CREATIVE TECHNOLOGIST. ${GLOBAL_CONSTRAINTS} MANDATE: Visuals are paramount. Use Math.sin/cos for procedural motion. particle systems, and organic movement. Canvas must be fullscreen.`,
+        engineer: `ROLE: PRINCIPAL SYSTEMS ENGINEER. ${GLOBAL_CONSTRAINTS} MANDATE: Performance is King. Use object pooling to avoid Garbage Collection. Use a fixed time-step game loop. absolute 60fps target.`,
+        analyst: `ROLE: QA & LOGIC ANALYST. ${GLOBAL_CONSTRAINTS} MANDATE: Bulletproof code. Handle resize events, orientation changes, and undefined inputs gracefully. strictly typed variable assumptions.`,
+        designer: `ROLE: LEAD UX DESIGNER. ${GLOBAL_CONSTRAINTS} MANDATE: Focus on 'Juice'—easing functions, elastic UI feedback, and layout stability. Typography must be fluid and readable.`
     };
 
-    const DESCRIPTIONS = { architect: "<b>ARCH:</b> Structure", technologist: "<b>TECH:</b> Visual Juice", engineer: "<b>ENG:</b> Performance", analyst: "<b>ANA:</b> Logic", designer: "<b>DES:</b> UI/UX" };
+    const DESCRIPTIONS = { architect: "<b>ARCH:</b> Systems", technologist: "<b>TECH:</b> Visuals", engineer: "<b>ENG:</b> Speed", analyst: "<b>ANA:</b> Safety", designer: "<b>DES:</b> UI/UX" };
 
-    function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value] || ""; }
+    function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value]; }
     
     function autoExpand(el) { 
         if(inputContainer.classList.contains('fullscreen')) return;
-        if(!el) return;
         el.style.height = 'auto'; 
         el.style.height = el.scrollHeight + 'px'; 
     }
@@ -221,39 +220,36 @@
         }
     }
 
-    function toggleLog() { 
-        if(logPane) logPane.classList.toggle('open'); 
-    }
-
-    function clearLog() { 
-        if(logContent) logContent.innerText = "Log cleared."; 
-    }
+    function toggleLog() { logPane.classList.toggle('open'); }
+    function clearLog() { logContent.innerText = "Log cleared."; }
 
     function refinePrompt() {
-        const raw = (input.value || "").trim();
+        const raw = input.value.trim();
         if(!raw) return;
-
         const role = modelSelector.value;
         
-        // UPGRADED MODIFIERS: Context-aware and defensive
         const modifiers = {
-            architect: "Refactor into a scalable component architecture. Enforce strict separation of concerns. Use CSS variables for every color and spacing token. Guarantee 100% semantic HTML5 compliance.",
-            technologist: "Implement high-performance Canvas rendering. Use procedural math for motion and state. Normalize coordinate systems for mobile responsiveness and high-DPI displays.",
-            engineer: "Optimize the main execution loop for a locked 60fps using delta-time. Eliminate DOM thrashing. Minimize allocations and garbage collection. Enforce predictable state transitions.",
-            analyst: "Audit for mobile touch stability. Add robust error handling and input sanitization. Ensure all edge cases are defensively coded with graceful degradation.",
-            designer: "Enhance visual feedback and micro-interactions. Use fluid typography scaling. Enforce high-contrast accessibility (WCAG compliant) and consistent spacing rhythm."
+            architect: "Structure: Component-based Architecture. Use CSS Custom Properties for theming. State should be managed via a central store or reactive pattern.",
+            technologist: "Visuals: Implement a 'p5.js-style' creative coding approach using vanilla Canvas API. Focus on generative art algorithms, blend modes, and pixel manipulation.",
+            engineer: "Core: Implement a robust 'Delta Time' render loop. Pre-allocate arrays and objects (Object Pooling) to prevent frame drops. Minimize DOM reflows.",
+            analyst: "Safety: Add comprehensive 'try-catch' blocks around critical loops. Validate all user inputs. Ensure touch event coordinates are normalized correctly across devices.",
+            designer: "Feel: Implement cubic-bezier transitions. Add visual feedback (ripples, scale) on all interactions. Ensure touch targets are at least 44x44px."
         };
 
-        const selectedModifier = modifiers[role] || modifiers.engineer;
+        const hybridCore = [
+            "CRITICAL IMPLEMENTATION DETAILS:",
+            "1. VIEWPORT: Use a full-screen Canvas (width: 100vw, height: 100vh). Handle 'resize' events to update canvas.width/height dynamically.",
+            "2. INPUT: Implement a 'Unified Pointer System'. Listen for BOTH mouse (mousedown/move/up) and touch (touchstart/touchmove/touchend) events. Normalize coordinates to function identically.",
+            "3. STYLE: Body { margin: 0; overflow: hidden; background: #000; touch-action: none; } to prevent mobile scrolling."
+        ].join('\n');
 
-        // Building the refined prompt with clear hierarchy and enforced constraints
         const refinedPrompt = [
             `TASK: ${raw}`,
-            `ROLE DIRECTIVE: ${PROMPTS[role] || PROMPTS.engineer}`,
-            `STRATEGY: ${selectedModifier}`,
-            `STYLE: Maintain the Swey IDE aesthetic: minimal, dark (#000), with #8ebfff accents.`,
-            `CRITICAL ENFORCEMENT: Strictly obey all GLOBAL_CONSTRAINTS. No emojis. Use SVG/Canvas for all icons. Output must be a complete standalone HTML5 document.`
-        ].join('\n');
+            `ROLE STRATEGY: ${modifiers[role]}`,
+            hybridCore,
+            `AESTHETIC: Swey IDE (Dark Mode). NO EMOJIS. Use Canvas primitives or SVG for graphics.`,
+            `OUTPUT REQUIREMENT: Return ONLY valid HTML5 code. End with /* AI_LOG [Chain of Thought Reasoning] */.`
+        ].join('\n\n');
 
         input.value = refinedPrompt;
         autoExpand(input);
@@ -390,17 +386,26 @@
             const data = await res.json();
             let newCode = data.response || data.html;
 
-            newCode = newCode.replace(/^```[a-z]*\n([\s\S]*?)\n```$/g, '$1').trim();
-            newCode = newCode.replace(/^```[a-z]*([\s\S]*?)```$/g, '$1').trim();
+            // CLEAN MARKDOWN
+            newCode = newCode.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/gi, '').trim();
 
-            const logRegex = /\/\*[\s]*AI_LOG[\s\S]*?\*\//gi;
+            // AGGRESSIVE LOG EXTRACTION: Extracts and COMPLETELY REMOVES from code
+            const logRegex = /(\/\*[\s\S]*?AI_LOG[\s\S]*?\*\/)|()/gi;
             const matches = newCode.match(logRegex);
+            
             if(matches) {
-                const logText = matches[0].replace(/\/\*[\s]*AI_LOG/i, "").replace(/\*\/$/, "").trim();
-                logContent.innerText = logText;
+                let cumulativeLog = "";
+                matches.forEach(match => {
+                    const cleanText = match
+                        .replace(/^(\/\*|)$/, "")
+                        .trim();
+                    cumulativeLog += cleanText + "\n\n";
+                });
+                // Remove all occurrences of AI_LOG blocks from the code before setting to editor
                 newCode = newCode.replace(logRegex, "").trim();
-                if(!logPane.classList.contains('open')) toggleLog();
+                logContent.innerText = cumulativeLog.trim();
             }
+
             editor.value = newCode;
             history.push(editor.value);
             handleEditorInput();
