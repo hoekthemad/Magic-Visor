@@ -134,7 +134,7 @@
         <div class="util-group" style="display:flex; gap:18px;">
             <button class="dock-btn" onclick="toggleLog()"><svg viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 20V5h6v6h6v9H6zM8 12v2h8v-2H8zm0 4v2h5v-2H8z"/></svg></button>
             <button class="dock-btn" onclick="undo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></button>
-            <button class="dock-btn" onclick="copyCurrent()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+            <button class="dock-btn" onclick="copyCurrent()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1 0.9 2 2 2h11c1.1 0 2-0.9 2-2V7c0-1.1-0.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
             <button class="dock-btn" onclick="wipe()" style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
         </div>
     </div>
@@ -154,9 +154,9 @@
 <div id="archive">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
         <h2 style="margin:0; font-size: 28px;">Archive</h2>
-        <button style="background:transparent; border:none; color:var(--accent); font-weight:800;" onclick="closeArchive()">DONE</button>
+        <button style="background:transparent; border:none; color:var(--accent); font-weight:800;" onclick="closeArchive()">CLOSE</button>
     </div>
-    <input type="text" id="archive-search" placeholder="Search projects..." oninput="renderArchiveList()">
+    <input type="text" id="archive-search" placeholder="Search titles or code content..." oninput="renderArchiveList()">
     <div id="list" style="overflow-y:auto; flex: 1;"></div>
 </div>
 
@@ -179,11 +179,11 @@
     const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
 
     const PROMPTS = {
-        architect: "SENIOR SOFTWARE ARCHITECT. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. DO NOT put logic logs anywhere else. Code must be clean and modular. NO emojis.",
-        technologist: "CREATIVE TECHNOLOGIST. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Detail the procedural canvas math. NO emojis.",
-        engineer: "PRINCIPAL SYSTEMS ENGINEER. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Focus on performance and Delta-Time. NO emojis.",
-        analyst: "QA & SYSTEMS ANALYST. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Audit code for mobile-input stability. NO emojis.",
-        designer: "LEAD UX DESIGNER. MANDATORY: Wrap your technical reasoning at the end of the file in a block comment starting exactly with '/* AI_LOG' and ending with '*/'. Explain the UI hit-box logic. NO emojis."
+        architect: "ROLE: SENIOR SOFTWARE ARCHITECT. OUTPUT MUST BE A COMPLETE, SELF-CONTAINED HTML5 DOCUMENT INCLUDING <!DOCTYPE html>, <html>, <head>, <body>, INLINE CSS, AND INLINE JAVASCRIPT. NO MARKDOWN. NO BACKTICKS. NO EXPLANATION OUTSIDE THE FILE. At the VERY END append EXACTLY ONE block comment starting with /* AI_LOG and ending with */. ALL reasoning must be inside that block only. The runtime HTML must contain ZERO AI_LOG content. Code must be modular, structured, and deterministic. Mobile-first.",
+        technologist: "ROLE: CREATIVE TECHNOLOGIST. OUTPUT MUST BE A FULL HTML5 DOCUMENT WITH INLINE CSS AND CANVAS-BASED JAVASCRIPT. NO MARKDOWN. NO BACKTICKS. NO TEXT OUTSIDE THE FILE. Append EXACTLY ONE /* AI_LOG block at the END ONLY. Inside AI_LOG explain procedural math and coordinate logic. Do NOT leak reasoning into runtime. Must render correctly inside iframe srcdoc. Mobile-safe.",
+        engineer: "ROLE: PRINCIPAL SYSTEMS ENGINEER. OUTPUT A COMPLETE HTML5 FILE ONLY. NO MARKDOWN. NO EXTERNAL COMMENTARY. EXACTLY ONE /* AI_LOG block at the END OF THE FILE. Focus on frame-rate independence, delta-time loops, and performance-safe rendering. No unnecessary allocations. Mobile GPU friendly. Runtime must contain zero AI_LOG artifacts.",
+        analyst: "ROLE: QA & SYSTEMS ANALYST. OUTPUT A FULL HTML5 DOCUMENT ONLY. NO MARKDOWN. NO EXPLANATION OUTSIDE FILE. Append EXACTLY ONE /* AI_LOG block at the END. Audit for mobile touch stability, edge cases, and input safety. Ensure defensive coding. The delivered runtime must be clean and free of logs.",
+        designer: "ROLE: LEAD UX DESIGNER. OUTPUT A COMPLETE HTML5 FILE ONLY. NO MARKDOWN. NO EXTRA TEXT. Append EXACTLY ONE /* AI_LOG block at the END. Focus on touch targets, visual hierarchy, hit-box clarity, and mobile ergonomics. Runtime must not contain reasoning text."
     };
 
     const DESCRIPTIONS = { architect: "<b>ARCH:</b> Structure", technologist: "<b>TECH:</b> Visual Juice", engineer: "<b>ENG:</b> Performance", analyst: "<b>ANA:</b> Logic", designer: "<b>DES:</b> UI/UX" };
@@ -250,7 +250,12 @@
     function save() {
         const name = prompt("Name sequence:"); if(!name) return;
         const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-        db[name] = { dna: editor.value, date: new Date().toLocaleDateString() };
+        db[name] = { 
+            dna: editor.value, 
+            date: new Date().toLocaleDateString(),
+            meta: modelSelector.value,
+            size: document.getElementById('size-tag').innerText 
+        };
         localStorage.setItem('K_DNA', JSON.stringify(db));
     }
 
@@ -262,17 +267,38 @@
         const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
         const list = document.getElementById('list');
         list.innerHTML = '';
-        Object.keys(db).filter(n => n.toLowerCase().includes(query)).sort().forEach(n => {
+        
+        Object.keys(db).filter(n => {
+            const inTitle = n.toLowerCase().includes(query);
+            const inCode = db[n].dna.toLowerCase().includes(query);
+            const inMeta = db[n].meta && db[n].meta.toLowerCase().includes(query);
+            return inTitle || inCode || inMeta;
+        }).sort().forEach(n => {
             const card = document.createElement('div');
             card.className = 'project-item';
             card.innerHTML = `
                 <div class="project-header">
-                    <div><h4 style="margin:0;">${n}</h4><span style="font-size:10px; color:var(--text-dim);">${db[n].date}</span></div>
-                    <button style="color:var(--accent); background:transparent; border:none; font-weight:700;" onclick="load('${n}')">RESTORE</button>
+                    <div>
+                        <h4 style="margin:0;">${n} <span style="font-size:9px; color:var(--accent)">[${db[n].meta?.toUpperCase() || 'DNA'}]</span></h4>
+                        <span style="font-size:10px; color:var(--text-dim);">${db[n].date} — ${db[n].size || ''}</span>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <button style="color:var(--danger); background:transparent; border:none; font-weight:700; font-size:11px;" onclick="deleteProject('${n}')">DELETE</button>
+                        <button style="color:var(--accent); background:transparent; border:none; font-weight:700; font-size:11px;" onclick="load('${n}')">RESTORE</button>
+                    </div>
                 </div>
             `;
             list.appendChild(card);
         });
+    }
+
+    function deleteProject(n) {
+        if(confirm(`Erase ${n} from DNA archive?`)) {
+            const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
+            delete db[n];
+            localStorage.setItem('K_DNA', JSON.stringify(db));
+            renderArchiveList();
+        }
     }
 
     function load(n) {
@@ -298,18 +324,13 @@
             const data = await res.json();
             let newCode = data.response || data.html;
 
-            // HARDENED LOG EXTRACTION: Global multiline match for AI_LOG blocks
             const logRegex = /\/\*[\s]*AI_LOG[\s\S]*?\*\//gi;
             const matches = newCode.match(logRegex);
             
             if(matches) {
-                // Extract clean text from the first match
                 const logText = matches[0].replace(/\/\*[\s]*AI_LOG/i, "").replace(/\*\/$/, "").trim();
                 logContent.innerText = logText;
-                
-                // Scrub ALL log blocks from the code so they don't appear in the editor
                 newCode = newCode.replace(logRegex, "").trim();
-                
                 if(!logPane.classList.contains('open')) toggleLog();
             } else {
                 logContent.innerText = "Analysis complete. Source sanitized.";
