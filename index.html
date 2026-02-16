@@ -81,10 +81,15 @@
         .dock-btn span { font-size: 9px; font-weight: 700; text-transform: uppercase; }
         .dock-btn.active { color: var(--accent); }
 
-        #input-dock { padding: 0 15px calc(15px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 10px; }
-        #input-container { flex: 1; background: var(--ui); border: 1px solid var(--border); border-radius: 18px; padding: 12px 16px; min-height: 48px; max-height: 150px; display: flex; align-items: center; }
-        #input { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto; }
-        #go { background: var(--accent); border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        #input-dock { padding: 0 15px calc(15px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 8px; }
+        #input-container { flex: 1; background: var(--ui); border: 1px solid var(--border); border-radius: 18px; padding: 12px 16px; min-height: 48px; max-height: 150px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; }
+        #input { width: 100%; background: transparent; border: none; color: #fff; font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto; max-height: 130px; }
+        .action-btn { background: var(--accent); border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        #refine { background: var(--ui); border: 1px solid var(--border); color: var(--accent); }
+        
+        #input-container.fullscreen { position: fixed; inset: 0; z-index: 1000; max-height: 100vh; border-radius: 0; padding: 60px 20px; background: var(--bg); }
+        #input-container.fullscreen #input { max-height: 80vh; font-size: 18px; }
+        .expand-btn { position: absolute; top: 8px; right: 12px; opacity: 0.4; cursor: pointer; color: var(--accent); }
 
         #archive { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; padding: calc(40px + env(safe-area-inset-top)) 24px 40px; }
         #archive-search { background: var(--ui); border: 1px solid var(--border); color: #fff; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 14px; width: 100%; }
@@ -146,8 +151,14 @@
     </nav>
 
     <div id="input-dock">
-        <div id="input-container"><textarea id="input" rows="1" placeholder="Describe the magic..." oninput="autoExpand(this)"></textarea></div>
-        <button id="go" onclick="evolve()"><svg viewBox="0 0 24 24" width="20" height="20" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+        <button id="refine" class="action-btn" onclick="refinePrompt()"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.03 5.49l-2.12-2.12 2.44-2.44 2.12 2.12-2.44 2.44z"/></svg></button>
+        <div id="input-container">
+            <div class="expand-btn" onclick="toggleInputFullscreen()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+            </div>
+            <textarea id="input" rows="1" placeholder="Describe the magic..." oninput="autoExpand(this)"></textarea>
+        </div>
+        <button id="go" class="action-btn" onclick="evolve()"><svg viewBox="0 0 24 24" width="20" height="20" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
     </div>
 </div>
 
@@ -167,6 +178,7 @@
     const miniView = document.getElementById('minimap-viewport');
     const world = document.getElementById('world');
     const input = document.getElementById('input');
+    const inputContainer = document.getElementById('input-container');
     const codePane = document.getElementById('code-pane');
     const utilRow = document.getElementById('utility-row');
     const devBtn = document.getElementById('btn-dev');
@@ -178,20 +190,74 @@
 
     const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
 
+    const GLOBAL_CONSTRAINTS = "STRICT RULES: 1. NO EMOJIS. 2. Use SVG or Canvas for icons. 3. Output COMPLETE HTML5 documents only. 4. No markdown backticks. 5. Include /* AI_LOG ... */ at the very end. 6. Match Swey IDE aesthetic (Dark, #000 background, #8ebfff accent). 7. No placeholder comments. 8. No incomplete sections. 9. No TODO markers. 10. No external frameworks or CDNs unless explicitly requested.";
+
     const PROMPTS = {
-        architect: "ROLE: SENIOR SOFTWARE ARCHITECT. OUTPUT MUST BE A COMPLETE, SELF-CONTAINED HTML5 DOCUMENT INCLUDING <!DOCTYPE html>, <html>, <head>, <body>, INLINE CSS, AND INLINE JAVASCRIPT. NO MARKDOWN. NO BACKTICKS. NO EXPLANATION OUTSIDE THE FILE. At the VERY END append EXACTLY ONE block comment starting with /* AI_LOG and ending with */. ALL reasoning must be inside that block only. The runtime HTML must contain ZERO AI_LOG content. Code must be modular, structured, and deterministic. Mobile-first.",
-        technologist: "ROLE: CREATIVE TECHNOLOGIST. OUTPUT MUST BE A FULL HTML5 DOCUMENT WITH INLINE CSS AND CANVAS-BASED JAVASCRIPT. NO MARKDOWN. NO BACKTICKS. NO TEXT OUTSIDE THE FILE. Append EXACTLY ONE /* AI_LOG block at the END ONLY. Inside AI_LOG explain procedural math and coordinate logic. Do NOT leak reasoning into runtime. Must render correctly inside iframe srcdoc. Mobile-safe.",
-        engineer: "ROLE: PRINCIPAL SYSTEMS ENGINEER. OUTPUT A COMPLETE HTML5 FILE ONLY. NO MARKDOWN. NO EXTERNAL COMMENTARY. EXACTLY ONE /* AI_LOG block at the END OF THE FILE. Focus on frame-rate independence, delta-time loops, and performance-safe rendering. No unnecessary allocations. Mobile GPU friendly. Runtime must contain zero AI_LOG artifacts.",
-        analyst: "ROLE: QA & SYSTEMS ANALYST. OUTPUT A FULL HTML5 DOCUMENT ONLY. NO MARKDOWN. NO EXPLANATION OUTSIDE FILE. Append EXACTLY ONE /* AI_LOG block at the END. Audit for mobile touch stability, edge cases, and input safety. Ensure defensive coding. The delivered runtime must be clean and free of logs.",
-        designer: "ROLE: LEAD UX DESIGNER. OUTPUT A COMPLETE HTML5 FILE ONLY. NO MARKDOWN. NO EXTRA TEXT. Append EXACTLY ONE /* AI_LOG block at the END. Focus on touch targets, visual hierarchy, hit-box clarity, and mobile ergonomics. Runtime must not contain reasoning text."
+        architect: `ROLE: SENIOR SOFTWARE ARCHITECT. ${GLOBAL_CONSTRAINTS} Focus on modular components, strict separation of concerns, CSS variables for all theme tokens, and semantic HTML5 structure.`,
+        technologist: `ROLE: CREATIVE TECHNOLOGIST. ${GLOBAL_CONSTRAINTS} Focus on high-performance Canvas 2D/WebGL rendering, procedural math-driven systems, deterministic animation loops, and responsive coordinate normalization.`,
+        engineer: `ROLE: PRINCIPAL SYSTEMS ENGINEER. ${GLOBAL_CONSTRAINTS} Focus on 60fps locked execution using delta-time, memory efficiency, minimized allocations, zero DOM thrashing, and predictable state management.`,
+        analyst: `ROLE: QA ANALYST. ${GLOBAL_CONSTRAINTS} Focus on defensive coding, exhaustive input validation, mobile touch edge-case handling, runtime error containment, and fallback safety mechanisms.`,
+        designer: `ROLE: LEAD UX DESIGNER. ${GLOBAL_CONSTRAINTS} Focus on refined micro-interactions, high-contrast accessibility (WCAG compliant), fluid typography scaling, and consistent visual feedback systems.`
     };
 
     const DESCRIPTIONS = { architect: "<b>ARCH:</b> Structure", technologist: "<b>TECH:</b> Visual Juice", engineer: "<b>ENG:</b> Performance", analyst: "<b>ANA:</b> Logic", designer: "<b>DES:</b> UI/UX" };
 
-    function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value]; }
-    function autoExpand(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
-    function toggleLog() { logPane.classList.toggle('open'); }
-    function clearLog() { logContent.innerText = "Log cleared."; }
+    function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value] || ""; }
+    
+    function autoExpand(el) { 
+        if(inputContainer.classList.contains('fullscreen')) return;
+        if(!el) return;
+        el.style.height = 'auto'; 
+        el.style.height = el.scrollHeight + 'px'; 
+    }
+
+    function toggleInputFullscreen() {
+        inputContainer.classList.toggle('fullscreen');
+        if(!inputContainer.classList.contains('fullscreen')) {
+            input.style.height = 'auto';
+            autoExpand(input);
+        } else {
+            input.style.height = '80vh';
+        }
+    }
+
+    function toggleLog() { 
+        if(logPane) logPane.classList.toggle('open'); 
+    }
+
+    function clearLog() { 
+        if(logContent) logContent.innerText = "Log cleared."; 
+    }
+
+    function refinePrompt() {
+        const raw = (input.value || "").trim();
+        if(!raw) return;
+
+        const role = modelSelector.value;
+        
+        // UPGRADED MODIFIERS: Context-aware and defensive
+        const modifiers = {
+            architect: "Refactor into a scalable component architecture. Enforce strict separation of concerns. Use CSS variables for every color and spacing token. Guarantee 100% semantic HTML5 compliance.",
+            technologist: "Implement high-performance Canvas rendering. Use procedural math for motion and state. Normalize coordinate systems for mobile responsiveness and high-DPI displays.",
+            engineer: "Optimize the main execution loop for a locked 60fps using delta-time. Eliminate DOM thrashing. Minimize allocations and garbage collection. Enforce predictable state transitions.",
+            analyst: "Audit for mobile touch stability. Add robust error handling and input sanitization. Ensure all edge cases are defensively coded with graceful degradation.",
+            designer: "Enhance visual feedback and micro-interactions. Use fluid typography scaling. Enforce high-contrast accessibility (WCAG compliant) and consistent spacing rhythm."
+        };
+
+        const selectedModifier = modifiers[role] || modifiers.engineer;
+
+        // Building the refined prompt with clear hierarchy and enforced constraints
+        const refinedPrompt = [
+            `TASK: ${raw}`,
+            `ROLE DIRECTIVE: ${PROMPTS[role] || PROMPTS.engineer}`,
+            `STRATEGY: ${selectedModifier}`,
+            `STYLE: Maintain the Swey IDE aesthetic: minimal, dark (#000), with #8ebfff accents.`,
+            `CRITICAL ENFORCEMENT: Strictly obey all GLOBAL_CONSTRAINTS. No emojis. Use SVG/Canvas for all icons. Output must be a complete standalone HTML5 document.`
+        ].join('\n');
+
+        input.value = refinedPrompt;
+        autoExpand(input);
+    }
 
     function applyHighlighting(code) {
         const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -267,7 +333,6 @@
         const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
         const list = document.getElementById('list');
         list.innerHTML = '';
-        
         Object.keys(db).filter(n => {
             const inTitle = n.toLowerCase().includes(query);
             const inCode = db[n].dna.toLowerCase().includes(query);
@@ -316,6 +381,7 @@
     function wipe() { if(confirm("Delete all code?")) { editor.value = ""; handleEditorInput(); world.srcdoc = ""; } }
 
     async function evolve() {
+        if(inputContainer.classList.contains('fullscreen')) toggleInputFullscreen();
         const cmd = input.value.trim(); if(!cmd) return;
         input.placeholder = "Forging DNA...";
         const sys = PROMPTS[modelSelector.value] + " COMMAND: " + cmd;
@@ -324,18 +390,17 @@
             const data = await res.json();
             let newCode = data.response || data.html;
 
+            newCode = newCode.replace(/^```[a-z]*\n([\s\S]*?)\n```$/g, '$1').trim();
+            newCode = newCode.replace(/^```[a-z]*([\s\S]*?)```$/g, '$1').trim();
+
             const logRegex = /\/\*[\s]*AI_LOG[\s\S]*?\*\//gi;
             const matches = newCode.match(logRegex);
-            
             if(matches) {
                 const logText = matches[0].replace(/\/\*[\s]*AI_LOG/i, "").replace(/\*\/$/, "").trim();
                 logContent.innerText = logText;
                 newCode = newCode.replace(logRegex, "").trim();
                 if(!logPane.classList.contains('open')) toggleLog();
-            } else {
-                logContent.innerText = "Analysis complete. Source sanitized.";
             }
-
             editor.value = newCode;
             history.push(editor.value);
             handleEditorInput();
@@ -343,6 +408,7 @@
             if(codePane.style.display === 'flex') toggleCode();
         } catch(e) { alert("Core Fault"); }
         input.value = ""; input.placeholder = "Describe the magic...";
+        input.style.height = 'auto';
     }
 
     window.onload = () => { if(editor.value) { history.push(editor.value); handleEditorInput(); } };
