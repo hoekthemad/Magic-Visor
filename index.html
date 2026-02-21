@@ -3,420 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <title>Swey IDE</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Nexus OS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #000000; --panel: #0a0a0a; --ui: #161616; --accent: #8ebfff; 
-            --border: #222222; --text-main: #ffffff; --text-dim: #555555; 
-            --danger: #ff5f5f; --font: -apple-system, system-ui, sans-serif;
-            --code-font: 'SF Mono', 'Menlo', monospace;
+        * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: 'Inter', sans-serif; color: #fff; overflow-x: hidden; }
+
+        /* Cinematic Splash Screen */
+        #splash-screen {
+            position: fixed; inset: 0; background: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 2000; transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; background: var(--bg); color: var(--text-main); font-family: var(--font); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-
-        #stage { flex: 1; position: relative; z-index: 1; background: #000; }
-        #world { width: 100%; height: 100%; border: none; }
-
-        #code-pane { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 140px; 
-            background: var(--panel); z-index: 50; display: none; flex-direction: column;
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        .logo-circle {
+            width: 80px; height: 80px; border: 1px solid #333; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            animation: pulse 2s infinite;
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0.3; transform: scale(0.9); } }
+
+        /* Main Hub UI */
+        #hub-ui {
+            padding: 80px 24px 60px 24px; opacity: 0; transition: opacity 1s;
+            max-width: 500px; margin: 0 auto;
+        }
+        .header { margin-bottom: 40px; text-align: left; }
+        .header h1 { font-weight: 300; letter-spacing: 12px; font-size: 18px; margin: 0; color: #fff; text-transform: uppercase; }
+        .header p { font-size: 9px; letter-spacing: 3px; color: #444; margin: 8px 0; }
+
+        .category { margin-top: 30px; margin-bottom: 15px; font-size: 8px; font-weight: 600; letter-spacing: 4px; color: #444; text-transform: uppercase; border-bottom: 1px solid #111; padding-bottom: 8px; }
         
-        #editor-container { position: relative; flex: 1; overflow: hidden; display: flex; }
-
-        #editor, #highlight-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            margin: 0; padding: 20px 80px 300px 20px;
-            font-family: var(--code-font); font-size: 14px; line-height: 1.5;
-            tab-size: 4; -moz-tab-size: 4; white-space: pre; word-wrap: normal;
-            border: none; overflow: auto; -webkit-font-smoothing: antialiased;
-        }
-
-        #editor { background: transparent; color: transparent; caret-color: #fff; z-index: 2; resize: none; -webkit-text-fill-color: transparent; }
-        #highlight-layer { z-index: 1; color: #abb2bf; pointer-events: none; display: block; }
-
-        #log-pane {
-            background: var(--ui); border-top: 1px solid var(--border);
-            height: 0; overflow: hidden; transition: height 0.3s ease;
-            font-family: var(--code-font); font-size: 11px; color: var(--accent);
-            padding: 0 15px; position: relative; z-index: 90;
-        }
-        #log-pane.open { height: 120px; padding: 12px 15px; overflow-y: auto; }
-        .log-header { font-size: 9px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
-
-        #minimap-gutter {
-            position: absolute; top: 0; right: 0; width: 60px; height: 100%;
-            background: rgba(0,0,0,0.4); border-left: 1px solid var(--border);
-            z-index: 10; overflow: hidden; touch-action: none;
-        }
-        #minimap-content { font-size: 2px; line-height: 2px; padding: 5px; white-space: pre; color: var(--text-dim); opacity: 0.3; }
-        #minimap-viewport {
-            position: absolute; top: 0; left: 0; width: 100%;
-            background: rgba(142, 191, 255, 0.1); border-top: 1px solid var(--accent);
-            border-bottom: 1px solid var(--accent); pointer-events: none;
-        }
-
-        .hl-comm { color: #5c6370; font-style: italic; }
-        .hl-str { color: #a8e6cf; }
-        .hl-tag { color: #8ebfff; }
-        .hl-attr { color: #ffcc66; }
-        .hl-key { color: #c792ea; }
-        .hl-num { color: #f78c6c; }
-
-        #control-complex { position: relative; z-index: 100; background: var(--panel); border-top: 1px solid var(--border); }
-        #utility-row { display: none; padding: 8px 15px; background: var(--ui); border-bottom: 1px solid var(--border); justify-content: space-between; align-items: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         
-        .v-tag { font-size: 10px; font-weight: 800; color: var(--text-dim); margin-right: 10px; }
-        #model-info { font-size: 9px; color: var(--text-dim); text-transform: uppercase; }
-        #model-info b { color: var(--accent); }
-        #model-selector { background: #1a1a1a; color: var(--accent); border: 1px solid var(--border); font-size: 9px; padding: 4px 8px; border-radius: 6px; appearance: none; }
-
-        #command-dock { display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px 5px; }
-        .dock-btn { background: transparent; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-dim); }
-        .dock-btn svg { width: 22px; height: 22px; fill: currentColor; }
-        .dock-btn span { font-size: 9px; font-weight: 700; text-transform: uppercase; }
-        .dock-btn.active { color: var(--accent); }
-
-        #input-dock { padding: 0 15px calc(15px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 8px; }
-        #input-container { flex: 1; background: var(--ui); border: 1px solid var(--border); border-radius: 18px; padding: 12px 16px; min-height: 48px; max-height: 150px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; }
-        #input { width: 100%; background: transparent; border: none; color: #fff; font-size: 16px; line-height: 1.4; resize: none; overflow-y: auto; max-height: 130px; }
-        .action-btn { background: var(--accent); border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        #refine { background: var(--ui); border: 1px solid var(--border); color: var(--accent); }
+        .vision-card {
+            background: #080808; border: 1px solid #151515; padding: 20px 10px;
+            border-radius: 16px; transition: 0.2s; text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+        }
+        .vision-card:active { background: #fff; color: #000; border-color: #fff; transform: scale(0.96); }
+        .vision-card:active svg { stroke: #000; }
         
-        #input-container.fullscreen { position: fixed; inset: 0; z-index: 1000; max-height: 100vh; border-radius: 0; padding: 60px 20px; background: var(--bg); }
-        #input-container.fullscreen #input { max-height: 80vh; font-size: 18px; }
-        .expand-btn { position: absolute; top: 8px; right: 12px; opacity: 0.4; cursor: pointer; color: var(--accent); }
+        .card-title { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
 
-        #archive { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; padding: calc(40px + env(safe-area-inset-top)) 24px 40px; }
-        #archive-search { background: var(--ui); border: 1px solid var(--border); color: #fff; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 14px; width: 100%; }
-        .project-item { background: var(--panel); padding: 18px; border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
-        .project-header { display: flex; justify-content: space-between; align-items: center; }
+        svg { width: 20px; height: 20px; stroke: #444; stroke-width: 1.5; fill: none; transition: 0.2s; }
+
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
-<div id="stage"><iframe id="world"></iframe></div>
-
-<div id="code-pane">
-    <div id="editor-container">
-        <div id="highlight-layer" aria-hidden="true"></div>
-        <textarea id="editor" spellcheck="false" oninput="handleEditorInput()" onscroll="syncScroll()"></textarea>
-        <div id="minimap-gutter" onpointerdown="mapSeek(event)" onpointermove="mapSeek(event)">
-            <div id="minimap-content"></div>
-            <div id="minimap-viewport"></div>
+    <div id="splash-screen">
+        <div class="logo-circle">
+            <svg viewBox="0 0 24 24" style="stroke: #fff; width: 30px; height: 30px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2v20M2 12h20"></path>
+            </svg>
         </div>
-    </div>
-</div>
-
-<div id="control-complex">
-    <div id="log-pane">
-        <div class="log-header">
-            <span>Event Log</span>
-            <div style="display:flex; gap:15px;">
-                <span onclick="clearLog()" style="color:var(--danger)">Clear</span>
-                <span onclick="toggleLog()" style="color:var(--accent)">Close</span>
-            </div>
-        </div>
-        <div id="log-content">System initialized. Awaiting command...</div>
+        <p style="margin-top: 24px; font-size: 8px; letter-spacing: 6px; color: #333; font-weight: 600;">SYSTEM BOOT</p>
     </div>
 
-    <div id="utility-row">
-        <div style="display:flex; align-items:center;">
-            <span class="v-tag" id="size-tag">0.0 KB</span>
-            <div id="model-info"><b>ARCH:</b> Structure</div>
-            <select id="model-selector" onchange="updateModelInfo()">
-                <option value="architect">Architect</option>
-                <option value="technologist">Technologist</option>
-                <option value="engineer">Engineer</option>
-                <option value="analyst">Analyst</option>
-                <option value="designer">Designer</option>
-            </select>
+    <div id="hub-ui">
+        <div class="header">
+            <h1>Nexus.OS</h1>
+            <p>Choose a website.</p>
         </div>
-        <div class="util-group" style="display:flex; gap:18px;">
-            <button class="dock-btn" onclick="toggleLog()"><svg viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 20V5h6v6h6v9H6zM8 12v2h8v-2H8zm0 4v2h5v-2H8z"/></svg></button>
-            <button class="dock-btn" onclick="undo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></button>
-            <button class="dock-btn" onclick="copyCurrent()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1 0.9 2 2 2h11c1.1 0 2-0.9 2-2V7c0-1.1-0.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
-            <button class="dock-btn" onclick="wipe()" style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
-        </div>
+
+        <div id="mount"></div>
     </div>
 
-    <nav id="command-dock">
-        <button class="dock-btn" id="btn-dev" onclick="toggleCode()"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg><span>Develop</span></button>
-        <button class="dock-btn" onclick="openArchive()"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg><span>Archive</span></button>
-        <button class="dock-btn" onclick="save()"><svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg><span>Save</span></button>
-    </nav>
-
-    <div id="input-dock">
-        <button id="refine" class="action-btn" onclick="refinePrompt()"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.03 5.49l-2.12-2.12 2.44-2.44 2.12 2.12-2.44 2.44z"/></svg></button>
-        <div id="input-container">
-            <div class="expand-btn" onclick="toggleInputFullscreen()">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-            </div>
-            <textarea id="input" rows="1" placeholder="Describe the magic..." oninput="autoExpand(this)"></textarea>
-        </div>
-        <button id="go" class="action-btn" onclick="evolve()"><svg viewBox="0 0 24 24" width="20" height="20" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
-    </div>
-</div>
-
-<div id="archive">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-        <h2 style="margin:0; font-size: 28px;">Archive</h2>
-        <button style="background:transparent; border:none; color:var(--accent); font-weight:800;" onclick="closeArchive()">CLOSE</button>
-    </div>
-    <input type="text" id="archive-search" placeholder="Search titles or code content..." oninput="renderArchiveList()">
-    <div id="list" style="overflow-y:auto; flex: 1;"></div>
-</div>
-
-<script>
-    const editor = document.getElementById('editor');
-    const highlightLayer = document.getElementById('highlight-layer');
-    const miniContent = document.getElementById('minimap-content');
-    const miniView = document.getElementById('minimap-viewport');
-    const world = document.getElementById('world');
-    const input = document.getElementById('input');
-    const inputContainer = document.getElementById('input-container');
-    const codePane = document.getElementById('code-pane');
-    const utilRow = document.getElementById('utility-row');
-    const devBtn = document.getElementById('btn-dev');
-    const modelSelector = document.getElementById('model-selector');
-    const modelInfo = document.getElementById('model-info');
-    const logPane = document.getElementById('log-pane');
-    const logContent = document.getElementById('log-content');
-    let history = [];
-
-    const WORKER_URL = atob("aHR0cHM6Ly9tb25vbGl0aC13b3JrZXIuc3dleWRldi53b3JrZXJzLmRldg==");
-
-    const GLOBAL_CONSTRAINTS = "SYSTEM OVERRIDE: 1. NO EMOJIS (Strict). 2. ICONS: Use SVG paths or Canvas drawing commands only. 3. OUTPUT: Single, raw HTML5 file. 4. NO MARKDOWN (Do not use ```html wrappers). 5. LOGGING: You MUST append a block comment /* AI_LOG [Chain of Thought Reasoning] */ at the very end of the file. 6. AESTHETIC: Deep dark theme (#000000 bg, #8ebfff accent, #161616 panels).";
-
-    const PROMPTS = {
-        architect: `ROLE: SENIOR SOFTWARE ARCHITECT. ${GLOBAL_CONSTRAINTS} MANDATE: Build a modular, event-driven system. usage of 'class' structures is preferred. SEPARATE state logic from rendering logic.`,
-        technologist: `ROLE: CREATIVE TECHNOLOGIST. ${GLOBAL_CONSTRAINTS} MANDATE: Visuals are paramount. Use Math.sin/cos for procedural motion. particle systems, and organic movement. Canvas must be fullscreen.`,
-        engineer: `ROLE: PRINCIPAL SYSTEMS ENGINEER. ${GLOBAL_CONSTRAINTS} MANDATE: Performance is King. Use object pooling to avoid Garbage Collection. Use a fixed time-step game loop. absolute 60fps target.`,
-        analyst: `ROLE: QA & LOGIC ANALYST. ${GLOBAL_CONSTRAINTS} MANDATE: Bulletproof code. Handle resize events, orientation changes, and undefined inputs gracefully. strictly typed variable assumptions.`,
-        designer: `ROLE: LEAD UX DESIGNER. ${GLOBAL_CONSTRAINTS} MANDATE: Focus on 'Juice'—easing functions, elastic UI feedback, and layout stability. Typography must be fluid and readable.`
-    };
-
-    const DESCRIPTIONS = { architect: "<b>ARCH:</b> Systems", technologist: "<b>TECH:</b> Visuals", engineer: "<b>ENG:</b> Speed", analyst: "<b>ANA:</b> Safety", designer: "<b>DES:</b> UI/UX" };
-
-    function updateModelInfo() { modelInfo.innerHTML = DESCRIPTIONS[modelSelector.value]; }
-    
-    function autoExpand(el) { 
-        if(inputContainer.classList.contains('fullscreen')) return;
-        el.style.height = 'auto'; 
-        el.style.height = el.scrollHeight + 'px'; 
-    }
-
-    function toggleInputFullscreen() {
-        inputContainer.classList.toggle('fullscreen');
-        if(!inputContainer.classList.contains('fullscreen')) {
-            input.style.height = 'auto';
-            autoExpand(input);
-        } else {
-            input.style.height = '80vh';
-        }
-    }
-
-    function toggleLog() { logPane.classList.toggle('open'); }
-    function clearLog() { logContent.innerText = "Log cleared."; }
-
-    function refinePrompt() {
-        const raw = input.value.trim();
-        if(!raw) return;
-        const role = modelSelector.value;
-        
-        const modifiers = {
-            architect: "Structure: Component-based Architecture. Use CSS Custom Properties for theming. State should be managed via a central store or reactive pattern.",
-            technologist: "Visuals: Implement a 'p5.js-style' creative coding approach using vanilla Canvas API. Focus on generative art algorithms, blend modes, and pixel manipulation.",
-            engineer: "Core: Implement a robust 'Delta Time' render loop. Pre-allocate arrays and objects (Object Pooling) to prevent frame drops. Minimize DOM reflows.",
-            analyst: "Safety: Add comprehensive 'try-catch' blocks around critical loops. Validate all user inputs. Ensure touch event coordinates are normalized correctly across devices.",
-            designer: "Feel: Implement cubic-bezier transitions. Add visual feedback (ripples, scale) on all interactions. Ensure touch targets are at least 44x44px."
+    <script>
+        const ICONS = {
+            art: `<svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.5 1.5"></path></svg>`,
+            music: `<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`,
+            code: `<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+            play: `<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M10 8l6 4-6 4V8z"></path></svg>`,
+            world: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
+            archive: `<svg viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`
         };
 
-        const hybridCore = [
-            "CRITICAL IMPLEMENTATION DETAILS:",
-            "1. VIEWPORT: Use a full-screen Canvas (width: 100vw, height: 100vh). Handle 'resize' events to update canvas.width/height dynamically.",
-            "2. INPUT: Implement a 'Unified Pointer System'. Listen for BOTH mouse (mousedown/move/up) and touch (touchstart/touchmove/touchend) events. Normalize coordinates to function identically.",
-            "3. STYLE: Body { margin: 0; overflow: hidden; background: #000; touch-action: none; } to prevent mobile scrolling."
-        ].join('\n');
+        const VISIONS = [
+            { cat: "Creative Platforms", items: [
+                { name: "Arts & Culture", url: "https://artsandculture.google.com/project/games", icon: 'art' },
+                { name: "Music Lab", url: "https://musiclab.chromeexperiments.com/", icon: 'music' },
+                { name: "Open Processing", url: "https://openprocessing.org/browse/#", icon: 'code' }
+            ]},
+            { cat: "Interactive Toys", items: [
+                { name: "Infinite Craft", url: "https://neal.fun/infinite-craft/", icon: 'play' },
+                { name: "Sand Spiel", url: "https://sandspiel.club/", icon: 'world' },
+                { name: "Liquid Simulation", url: "https://paveldogreat.github.io/WebGL-Fluid-Simulation/", icon: 'play' }
+            ]},
+            { cat: "Immersive Worlds", items: [
+                { name: "Itch.io Web", url: "https://itch.io/games/platform-web", icon: 'world' },
+                { name: "GeoGuessr", url: "https://www.geoguessr.com/", icon: 'world' },
+                { name: "Poki Arcade", url: "https://poki.com/", icon: 'play' },
+                { name: "Little Alchemy 2", url: "https://littlealchemy2.com/", icon: 'play' }
+            ]},
+            { cat: "Internal Archive", items: [
+                { name: "Local Projects", url: "index.html", icon: 'archive' }
+            ]}
+        ];
 
-        const refinedPrompt = [
-            `TASK: ${raw}`,
-            `ROLE STRATEGY: ${modifiers[role]}`,
-            hybridCore,
-            `AESTHETIC: Swey IDE (Dark Mode). NO EMOJIS. Use Canvas primitives or SVG for graphics.`,
-            `OUTPUT REQUIREMENT: Return ONLY valid HTML5 code. End with /* AI_LOG [Chain of Thought Reasoning] */.`
-        ].join('\n\n');
+        function buildUI() {
+            const mount = document.getElementById('mount');
+            VISIONS.forEach(section => {
+                const catHeader = document.createElement('div');
+                catHeader.className = 'category';
+                catHeader.innerText = section.cat;
+                mount.appendChild(catHeader);
 
-        input.value = refinedPrompt;
-        autoExpand(input);
-    }
+                const grid = document.createElement('div');
+                grid.className = 'grid';
 
-    function applyHighlighting(code) {
-        const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const pattern = /(&lt;!--[\s\S]*?--&gt;)|(".+?"|'.+?')|(&lt;\/?[a-z1-6]+|&gt;)|(\b(?:function|var|let|const|if|else|return|for|while|new|try|catch|async|await|window|document|Math|canvas|ctx)\b)|(\b\d+\b)|(\s[a-z-]+(?==))/gi;
-        return escaped.replace(pattern, (match, comm, str, tag, key, num, attr) => {
-            if (comm) return `<span class="hl-comm">${comm}</span>`;
-            if (str) return `<span class="hl-str">${str}</span>`;
-            if (tag) return `<span class="hl-tag">${tag}</span>`;
-            if (key) return `<span class="hl-key">${key}</span>`;
-            if (num) return `<span class="hl-num">${num}</span>`;
-            if (attr) return `<span class="hl-attr">${attr}</span>`;
-            return match;
-        });
-    }
-
-    function handleEditorInput() {
-        const code = editor.value;
-        highlightLayer.innerHTML = applyHighlighting(code) + "\n\n";
-        miniContent.innerText = code;
-        syncSize();
-        updateMinimapViewport();
-    }
-
-    function syncScroll() {
-        highlightLayer.scrollTop = editor.scrollTop;
-        highlightLayer.scrollLeft = editor.scrollLeft;
-        updateMinimapViewport();
-    }
-
-    function updateMinimapViewport() {
-        const ratio = editor.clientHeight / editor.scrollHeight;
-        miniView.style.height = Math.max(10, ratio * 100) + "%";
-        miniView.style.top = (editor.scrollTop / editor.scrollHeight * 100) + "%";
-    }
-
-    function mapSeek(e) {
-        if (e.buttons !== 1 && e.type !== 'pointerdown') return;
-        const rect = document.getElementById('minimap-gutter').getBoundingClientRect();
-        const pos = (e.clientY - rect.top) / rect.height;
-        editor.scrollTop = (pos * editor.scrollHeight) - (editor.clientHeight / 2);
-    }
-
-    function toggleCode() {
-        const isOpen = codePane.style.display === 'flex';
-        codePane.style.display = isOpen ? 'none' : 'flex';
-        utilRow.style.display = isOpen ? 'none' : 'flex';
-        devBtn.classList.toggle('active');
-        if (isOpen) world.srcdoc = editor.value; else handleEditorInput();
-    }
-
-    function syncSize() {
-        const kb = (new Blob([editor.value]).size / 1024).toFixed(1);
-        document.getElementById('size-tag').innerText = kb + " KB";
-    }
-
-    function save() {
-        const name = prompt("Name sequence:"); if(!name) return;
-        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-        db[name] = { 
-            dna: editor.value, 
-            date: new Date().toLocaleDateString(),
-            meta: modelSelector.value,
-            size: document.getElementById('size-tag').innerText 
-        };
-        localStorage.setItem('K_DNA', JSON.stringify(db));
-    }
-
-    function openArchive() { document.getElementById('archive').style.display = 'flex'; renderArchiveList(); }
-    function closeArchive() { document.getElementById('archive').style.display = 'none'; }
-
-    function renderArchiveList() {
-        const query = document.getElementById('archive-search').value.toLowerCase();
-        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-        const list = document.getElementById('list');
-        list.innerHTML = '';
-        Object.keys(db).filter(n => {
-            const inTitle = n.toLowerCase().includes(query);
-            const inCode = db[n].dna.toLowerCase().includes(query);
-            const inMeta = db[n].meta && db[n].meta.toLowerCase().includes(query);
-            return inTitle || inCode || inMeta;
-        }).sort().forEach(n => {
-            const card = document.createElement('div');
-            card.className = 'project-item';
-            card.innerHTML = `
-                <div class="project-header">
-                    <div>
-                        <h4 style="margin:0;">${n} <span style="font-size:9px; color:var(--accent)">[${db[n].meta?.toUpperCase() || 'DNA'}]</span></h4>
-                        <span style="font-size:10px; color:var(--text-dim);">${db[n].date} — ${db[n].size || ''}</span>
-                    </div>
-                    <div style="display:flex; gap:12px;">
-                        <button style="color:var(--danger); background:transparent; border:none; font-weight:700; font-size:11px;" onclick="deleteProject('${n}')">DELETE</button>
-                        <button style="color:var(--accent); background:transparent; border:none; font-weight:700; font-size:11px;" onclick="load('${n}')">RESTORE</button>
-                    </div>
-                </div>
-            `;
-            list.appendChild(card);
-        });
-    }
-
-    function deleteProject(n) {
-        if(confirm(`Erase ${n} from DNA archive?`)) {
-            const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-            delete db[n];
-            localStorage.setItem('K_DNA', JSON.stringify(db));
-            renderArchiveList();
-        }
-    }
-
-    function load(n) {
-        const db = JSON.parse(localStorage.getItem('K_DNA') || '{}');
-        editor.value = db[n].dna;
-        history.push(editor.value);
-        world.srcdoc = editor.value;
-        handleEditorInput();
-        closeArchive();
-        if(codePane.style.display === 'flex') toggleCode();
-    }
-
-    function copyCurrent() { navigator.clipboard.writeText(editor.value); }
-    function undo() { if(history.length > 1) { history.pop(); editor.value = history[history.length-1]; handleEditorInput(); world.srcdoc = editor.value; } }
-    function wipe() { if(confirm("Delete all code?")) { editor.value = ""; handleEditorInput(); world.srcdoc = ""; } }
-
-    async function evolve() {
-        if(inputContainer.classList.contains('fullscreen')) toggleInputFullscreen();
-        const cmd = input.value.trim(); if(!cmd) return;
-        input.placeholder = "Forging DNA...";
-        const sys = PROMPTS[modelSelector.value] + " COMMAND: " + cmd;
-        try {
-            const res = await fetch(WORKER_URL, { method: "POST", body: JSON.stringify({ source: editor.value, task: sys }) });
-            const data = await res.json();
-            let newCode = data.response || data.html;
-
-            // CLEAN MARKDOWN
-            newCode = newCode.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/gi, '').trim();
-
-            // AGGRESSIVE LOG EXTRACTION: Extracts and COMPLETELY REMOVES from code
-            const logRegex = /(\/\*[\s\S]*?AI_LOG[\s\S]*?\*\/)|()/gi;
-            const matches = newCode.match(logRegex);
-            
-            if(matches) {
-                let cumulativeLog = "";
-                matches.forEach(match => {
-                    const cleanText = match
-                        .replace(/^(\/\*|)$/, "")
-                        .trim();
-                    cumulativeLog += cleanText + "\n\n";
+                section.items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'vision-card';
+                    card.innerHTML = `${ICONS[item.icon]}<div class="card-title">${item.name}</div>`;
+                    card.onclick = () => window.location.href = item.url;
+                    grid.appendChild(card);
                 });
-                // Remove all occurrences of AI_LOG blocks from the code before setting to editor
-                newCode = newCode.replace(logRegex, "").trim();
-                logContent.innerText = cumulativeLog.trim();
-            }
+                mount.appendChild(grid);
+            });
+        }
 
-            editor.value = newCode;
-            history.push(editor.value);
-            handleEditorInput();
-            world.srcdoc = editor.value;
-            if(codePane.style.display === 'flex') toggleCode();
-        } catch(e) { alert("Core Fault"); }
-        input.value = ""; input.placeholder = "Describe the magic...";
-        input.style.height = 'auto';
-    }
-
-    window.onload = () => { if(editor.value) { history.push(editor.value); handleEditorInput(); } };
-</script>
+        window.onload = () => {
+            buildUI();
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.opacity = '0';
+                document.getElementById('hub-ui').style.opacity = '1';
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 1000);
+            }, 2000);
+        };
+    </script>
 </body>
 </html>
