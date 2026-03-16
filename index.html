@@ -2,147 +2,387 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <title>Nexus OS</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magic Visor - The Volcanic Forest</title>
     <style>
-        * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: 'Inter', sans-serif; color: #fff; overflow-x: hidden; }
-
-        /* Cinematic Splash Screen */
-        #splash-screen {
-            position: fixed; inset: 0; background: #000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 2000; transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+        :root {
+            --bg-dark: #050505;
+            --aura-green: #00ff88;
+            --aura-silver: #bdc3c7;
+            --aura-blue: #00d4ff;
+            --gold: #ffd700;
+            --boss-red: #ff4444;
+            --zone2-purple: #a020f0;
+            --zone3-orange: #ff4500;
         }
-        .logo-circle {
-            width: 80px; height: 80px; border: 1px solid #333; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
+
+        body {
+            background-color: var(--bg-dark);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Arial Black', sans-serif;
+            user-select: none;
+            color: white;
+        }
+
+        /* --- HUD --- */
+        #hud-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 95px;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; box-sizing: border-box;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-orb {
+            width: 55px; height: 55px;
+            border-radius: 50%; border: 3px solid var(--aura-green);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 1.4rem;
+            box-shadow: 0 0 20px var(--aura-green);
+            transition: border-color 1s;
+        }
+
+        #exp-bar-container {
+            flex: 1; height: 10px; background: rgba(0,0,0,0.8);
+            margin: 0 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+
+        #exp-fill {
+            width: 0%; height: 100%; background: var(--aura-green);
+            box-shadow: 0 0 15px var(--aura-green); transition: width 0.4s ease;
+        }
+
+        .inventory-brief {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+            font-size: 0.9rem; font-weight: 900;
+        }
+
+        /* --- TRAVEL GATE --- */
+        #travel-gate {
+            position: absolute; top: 110px; left: 50%; transform: translateX(-50%);
+            padding: 10px 20px; background: rgba(160, 32, 240, 0.6);
+            border: 2px solid white; border-radius: 20px;
+            font-size: 0.8rem; color: white; display: none;
+            z-index: 500; cursor: pointer; text-align: center;
             animation: pulse 2s infinite;
         }
-        @keyframes pulse { 0% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0.3; transform: scale(0.9); } }
 
-        /* Main Hub UI */
-        #hub-ui {
-            padding: 80px 24px 60px 24px; opacity: 0; transition: opacity 1s;
-            max-width: 500px; margin: 0 auto;
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); box-shadow: 0 0 5px white; }
+            50% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 25px var(--zone3-orange); }
+            100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 5px white; }
         }
-        .header { margin-bottom: 40px; text-align: left; }
-        .header h1 { font-weight: 300; letter-spacing: 12px; font-size: 18px; margin: 0; color: #fff; text-transform: uppercase; }
-        .header p { font-size: 9px; letter-spacing: 3px; color: #444; margin: 8px 0; }
 
-        .category { margin-top: 30px; margin-bottom: 15px; font-size: 8px; font-weight: 600; letter-spacing: 4px; color: #444; text-transform: uppercase; border-bottom: 1px solid #111; padding-bottom: 8px; }
+        /* --- WORLD --- */
+        #world-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; }
+        #game-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('background.png') no-repeat center center; background-size: cover; z-index: 0; transition: 2s ease-in-out; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        
-        .vision-card {
-            background: #080808; border: 1px solid #151515; padding: 20px 10px;
-            border-radius: 16px; transition: 0.2s; text-align: center;
-            display: flex; flex-direction: column; align-items: center; gap: 12px;
+        /* Heat Haze for Zone 3 */
+        @keyframes haze {
+            0% { filter: hue-rotate(0deg) contrast(1); }
+            50% { filter: hue-rotate(10deg) contrast(1.2) brightness(1.1); transform: scale(1.01); }
+            100% { filter: hue-rotate(0deg) contrast(1); }
         }
-        .vision-card:active { background: #fff; color: #000; border-color: #fff; transform: scale(0.96); }
-        .vision-card:active svg { stroke: #000; }
+        .heat-haze { animation: haze 4s infinite ease-in-out; }
+
+        .target-img { width: 70vw; max-width: 260px; z-index: 10; transition: 0.4s; }
+        .boss-style { width: 85vw; max-width: 320px; filter: hue-rotate(-50deg) brightness(1.2) drop-shadow(0 0 30px var(--boss-red)) !important; }
         
-        .card-title { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        .wolf-boss { 
+            width: 90vw; max-width: 380px; 
+            filter: drop-shadow(0 0 40px var(--zone3-orange)) brightness(1.3) !important;
+            animation: wolf-breath 2s infinite ease-in-out;
+        }
+        @keyframes wolf-breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
-        svg { width: 20px; height: 20px; stroke: #444; stroke-width: 1.5; fill: none; transition: 0.2s; }
+        #weapon-hand { position: absolute; bottom: -20px; right: -20px; width: 300px; z-index: 50; pointer-events: none; transform-origin: bottom right; }
 
-        ::-webkit-scrollbar { display: none; }
+        /* --- FOOTER --- */
+        #footer { height: 160px; background: #000; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 2px solid #333; z-index: 200; }
+        .action-btn { position: relative; border-radius: 50%; background: #151515; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }
+        .main-strike { width: 90px; height: 90px; border: 4px solid #555; }
+        .side-btn { width: 75px; height: 75px; border: 3px solid transparent; }
+        #btn-forge { border-color: var(--aura-silver); background: rgba(189, 195, 199, 0.15); color: var(--aura-silver); }
+        #btn-buff { border-color: var(--aura-blue); background: rgba(0, 212, 255, 0.15); color: var(--aura-blue); }
+        .btn-val { font-size: 1.2rem; font-weight: 900; }
+        .btn-label { font-size: 0.6rem; font-weight: 900; margin-top: 4px; }
+        .side-btn.disabled { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
+        .active-glow { border-color: var(--aura-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
+        #buff-progress { position: absolute; bottom: 8px; width: 40px; height: 4px; background: var(--aura-blue); transform: scaleX(0); }
+
+        /* Animations */
+        @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
+        .weapon-attack { animation: strike 0.4s ease-out forwards; }
+        .hit-flash { filter: brightness(1.5) contrast(1.2) !important; transform: scale(1.05); }
+        .shatter { opacity: 0; transform: scale(1.8); filter: blur(20px) brightness(5); }
+        
+        #loot-alert { position: absolute; top: 120px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <div class="logo-circle">
-            <svg viewBox="0 0 24 24" style="stroke: #fff; width: 30px; height: 30px;">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 2v20M2 12h20"></path>
-            </svg>
+    <div id="loot-alert">ITEM UNLOCKED!</div>
+    <div id="travel-gate" onclick="advanceZone()">ZONE 2: BLIGHTED PEAK<br><span style="font-size: 0.6rem;">CURSE WILL BE LIFTED</span></div>
+
+    <div id="hud-container">
+        <div class="hud-orb" id="level-orb">1</div>
+        <div id="exp-bar-container">
+            <div id="exp-fill"></div>
         </div>
-        <p style="margin-top: 24px; font-size: 8px; letter-spacing: 6px; color: #333; font-weight: 600;">SYSTEM BOOT</p>
+        <div class="inventory-brief">
+            <div style="color: var(--gold)"><span id="coins">0</span> ◈</div>
+            <div style="color: var(--aura-silver)"><span id="ore">0</span> ORE</div>
+            <div style="color: var(--aura-blue)"><span id="fish">0</span> FISH</div>
+        </div>
     </div>
 
-    <div id="hub-ui">
-        <div class="header">
-            <h1>Nexus.OS</h1>
-            <p>Choose a website.</p>
-        </div>
+    <div id="world-container">
+        <div id="game-bg"></div>
+        <img src="slime.png" id="target" class="target-img">
+        <img src="stick.png" id="weapon-hand">
+    </div>
 
-        <div id="mount"></div>
+    <div id="footer">
+        <div id="btn-forge" class="action-btn side-btn disabled" onclick="useOre()">
+            <div class="btn-val" id="ore-cost">5</div>
+            <div class="btn-label">FORGE</div>
+        </div>
+        <div id="main-action" class="action-btn main-strike" onclick="toggleAuto()">
+            <img src="attackicon.png" style="width:40px;">
+        </div>
+        <div id="btn-buff" class="action-btn side-btn disabled" onclick="useFish()">
+            <div class="btn-val" id="fish-cost">3</div>
+            <div class="btn-label">VITAL</div>
+            <div id="buff-progress"></div>
+        </div>
     </div>
 
     <script>
-        const ICONS = {
-            art: `<svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.5 1.5"></path></svg>`,
-            music: `<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`,
-            code: `<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
-            play: `<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M10 8l6 4-6 4V8z"></path></svg>`,
-            world: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
-            archive: `<svg viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`
+        const state = {
+            level: 1, exp: 0, coins: 0, ore: 0, fish: 0,
+            active: false, power: 1, speed: 2500,
+            isBuffed: false, oreReq: 5, fishReq: 3,
+            hasSword: false, hasDagger: false, hasGreatsword: false,
+            currentZone: 1,
+            isBoss: false, currentTarget: 'hunt',
+            data: {
+                hunt: { img: 'slime.png', aura: '#00ff88', hp: 100 },
+                mine: { img: 'ore.png', aura: '#bdc3c7', hp: 100 },
+                fish: { img: 'fish.png', aura: '#00d4ff', hp: 100 },
+                boss_z1: { img: 'slime.png', aura: '#ff4444', hp: 500 },
+                wolf_z2: { img: 'fire_wolf.png', aura: '#ff4500', hp: 2500 },
+                behemoth_z3: { img: 'behemoth.png', aura: '#ff0000', hp: 10000 }
+            }
         };
 
-        const VISIONS = [
-            { cat: "Creative Platforms", items: [
-                { name: "Neal.fun", url: "https://neal.fun/", icon: 'play' },
-                { name: "Arts & Culture", url: "https://artsandculture.google.com/project/games", icon: 'art' },
-                { name: "Music Lab", url: "https://musiclab.chromeexperiments.com/", icon: 'music' },
-                { name: "Open Processing", url: "https://openprocessing.org/browse/#", icon: 'code' }
-            ]},
-            { cat: "Interactive Toys", items: [
-                { name: "Sand Spiel", url: "https://sandspiel.club/", icon: 'world' },
-                { name: "Liquid Simulation", url: "https://paveldogreat.github.io/WebGL-Fluid-Simulation/", icon: 'play' }
-            ]},
-            { cat: "Immersive Worlds", items: [
-                { name: "Itch.io Web", url: "https://itch.io/games/platform-web", icon: 'world' },
-                { name: "GeoGuessr", url: "https://www.geoguessr.com/", icon: 'world' },
-                { name: "Poki Arcade", url: "https://poki.com/", icon: 'play' },
-                { name: "Little Alchemy 2", url: "https://littlealchemy2.com/", icon: 'play' }
-            ]},
-            
-            { cat: "Discovery & Zen", items: [
-                { name: "Radio Garden", url: "http://radio.garden", icon: 'world' },
-                { name: "WindowSwap", url: "https://www.window-swap.com/", icon: 'world' },
-                { name: "Stars", url: "https://stars.chromeexperiments.com/", icon: 'world' }
-            ]}   
-        ];
+        const targetEl = document.getElementById('target');
+        const weaponEl = document.getElementById('weapon-hand');
+        const expFill = document.getElementById('exp-fill');
+        const levelOrb = document.getElementById('level-orb');
+        let hp = 100;
+        let actionTimer = null;
 
-        function buildUI() {
-            const mount = document.getElementById('mount');
-            VISIONS.forEach(section => {
-                const catHeader = document.createElement('div');
-                catHeader.className = 'category';
-                catHeader.innerText = section.cat;
-                mount.appendChild(catHeader);
-
-                const grid = document.createElement('div');
-                grid.className = 'grid';
-
-                section.items.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'vision-card';
-                    card.innerHTML = `${ICONS[item.icon]}<div class="card-title">${item.name}</div>`;
-                    card.onclick = () => window.location.href = item.url;
-                    grid.appendChild(card);
-                });
-                mount.appendChild(grid);
-            });
+        function toggleAuto() {
+            state.active = !state.active;
+            document.getElementById('main-action').classList.toggle('active-glow', state.active);
+            if (state.active && hp > 0) actionLoop();
+            else clearTimeout(actionTimer);
         }
 
-        window.onload = () => {
-            buildUI();
-            setTimeout(() => {
-                document.getElementById('splash-screen').style.opacity = '0';
-                document.getElementById('hub-ui').style.opacity = '1';
-                setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
-                }, 1000);
-            }, 2000);
-        };
+        function actionLoop() {
+            clearTimeout(actionTimer);
+            if (!state.active || hp <= 0) return;
+            weaponEl.classList.remove('weapon-attack');
+            void weaponEl.offsetWidth;
+            weaponEl.classList.add('weapon-attack');
+
+            actionTimer = setTimeout(() => {
+                let damage = 34 * state.power;
+                if (state.hasSword) damage *= 2;
+                if (state.hasDagger) damage *= 1.5; 
+                if (state.hasGreatsword) damage *= 3; 
+
+                hp -= damage;
+                targetEl.classList.add('hit-flash');
+                setTimeout(() => targetEl.classList.remove('hit-flash'), 100);
+                if (hp <= 0) finishTarget();
+                else actionTimer = setTimeout(actionLoop, state.speed);
+            }, 250);
+        }
+
+        function finishTarget() {
+            clearTimeout(actionTimer);
+            targetEl.classList.add('shatter');
+
+            // Penalty Logic (The "Curse")
+            let penalty = 1.0;
+            if (state.currentZone === 1 && state.hasSword) penalty = 0.5;
+            if (state.currentZone === 2 && state.hasDagger) penalty = 0.33; // 3x worse to farm Zone 2
+
+            let zoneMult = 1.0;
+            if (state.currentZone === 2) zoneMult = 2.0;
+            if (state.currentZone === 3) zoneMult = 5.0; // Significant jump for Zone 3
+            
+            if (state.currentTarget === 'boss_z1') {
+                state.coins += Math.round(100 * penalty);
+                if (!state.hasSword && Math.random() < 0.20) unlockItem('sword.png', 'SWORD UNLOCKED!');
+            } else if (state.currentTarget === 'wolf_z2') {
+                state.coins += Math.round(500 * penalty);
+                if (!state.hasDagger && Math.random() < 0.15) unlockItem('wolf_dagger.png', 'WOLF DAGGER UNLOCKED!');
+            } else if (state.currentTarget === 'behemoth_z3') {
+                state.coins += 2500;
+                if (!state.hasGreatsword && Math.random() < 0.10) unlockItem('greatsword.png', 'FLAME GREATSWORD UNLOCKED!');
+            } else {
+                if (state.currentTarget === 'hunt') state.coins += Math.round((state.isBoss ? 50 : 10) * penalty * zoneMult);
+                if (state.currentTarget === 'mine') state.ore += Math.round(1 * penalty * zoneMult);
+                if (state.currentTarget === 'fish') state.fish += Math.round(1 * penalty * zoneMult);
+            }
+
+            gainExp(state.isBoss ? 200 * penalty : 25 * penalty);
+            updateUI();
+            checkProgression();
+            setTimeout(respawn, 1500);
+        }
+
+        function unlockItem(img, text) {
+            if (img.includes('sword')) state.hasSword = true;
+            if (img.includes('dagger')) state.hasDagger = true;
+            if (img.includes('greatsword')) state.hasGreatsword = true;
+            weaponEl.src = img;
+            const alertBox = document.getElementById('loot-alert');
+            alertBox.innerText = text;
+            alertBox.style.opacity = "1";
+            setTimeout(() => alertBox.style.opacity = "0", 3000);
+        }
+
+        function checkProgression() {
+            const gate = document.getElementById('travel-gate');
+            // Zone 1 -> 2
+            if (state.level >= 35 && state.hasSword && state.currentZone === 1) {
+                gate.style.display = 'block';
+                gate.innerHTML = "ZONE 2: BLIGHTED PEAK<br><span style='font-size: 0.6rem;'>CURSE WILL BE LIFTED</span>";
+            }
+            // Zone 2 -> 3
+            else if (state.level >= 75 && state.hasDagger && state.currentZone === 2) {
+                gate.style.display = 'block';
+                gate.style.background = "rgba(255, 69, 0, 0.6)";
+                gate.innerHTML = "ZONE 3: VOLCANIC FOREST<br><span style='font-size: 0.6rem;'>LIFT THE WOLF'S CURSE</span>";
+            } else {
+                gate.style.display = 'none';
+            }
+        }
+
+        function advanceZone() {
+            state.currentZone++;
+            document.getElementById('travel-gate').style.display = 'none';
+            
+            if (state.currentZone === 2) {
+                state.fishReq = 6;
+                document.getElementById('game-bg').style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)";
+                levelOrb.style.borderColor = "var(--zone2-purple)";
+                state.data.hunt = { img: 'slime.png', aura: 'var(--boss-red)', hp: 500 }; 
+                state.data.mine = { img: 'ore.png', aura: 'var(--zone2-purple)', hp: 400 };
+                state.data.fish = { img: 'fish.png', aura: 'var(--zone2-purple)', hp: 400 };
+                alert("Zone 2 Entered. Resource yields doubled. Beware of the Fire Wolf.");
+            } 
+            else if (state.currentZone === 3) {
+                state.fishReq = 12;
+                document.getElementById('game-bg').classList.add('heat-haze');
+                document.getElementById('game-bg').style.filter = "sepia(1) saturate(2) hue-rotate(-30deg) brightness(0.3)";
+                levelOrb.style.borderColor = "var(--zone3-orange)";
+                
+                // Fire Wolf is now the "Slime" of Zone 3
+                state.data.hunt = { img: 'fire_wolf.png', aura: 'var(--zone3-orange)', hp: 2000 };
+                state.data.mine = { img: 'ore.png', aura: 'var(--zone3-orange)', hp: 1500 };
+                state.data.fish = { img: 'fish.png', aura: 'var(--zone3-orange)', hp: 1500 };
+                alert("Zone 3 Entered: Volcanic Forest. The heat intensifies. Fire Wolves are now common.");
+            }
+            
+            updateUI();
+        }
+
+        function respawn() {
+            targetEl.classList.remove('shatter', 'boss-style', 'wolf-boss');
+            state.isBoss = false;
+
+            if (state.currentZone === 3) {
+                if (state.level >= 100 && Math.random() < 0.15) {
+                    state.currentTarget = 'behemoth_z3';
+                    state.isBoss = true;
+                    targetEl.classList.add('wolf-boss');
+                } else {
+                    const types = ['hunt', 'mine', 'fish'];
+                    state.currentTarget = types[Math.floor(Math.random() * types.length)];
+                }
+            } else if (state.currentZone === 2) {
+                if (state.level >= 50 && Math.random() < 0.15) {
+                    state.currentTarget = 'wolf_z2';
+                    state.isBoss = true;
+                    targetEl.classList.add('wolf-boss');
+                } else {
+                    const types = ['hunt', 'mine', 'fish'];
+                    state.currentTarget = types[Math.floor(Math.random() * types.length)];
+                    if (state.currentTarget === 'hunt') { state.isBoss = true; targetEl.classList.add('boss-style'); }
+                }
+            } else {
+                if (state.level >= 25 && Math.random() < 0.10) {
+                    state.currentTarget = 'boss_z1';
+                    state.isBoss = true;
+                    targetEl.classList.add('boss-style');
+                } else {
+                    const types = ['hunt', 'mine', 'fish'];
+                    state.currentTarget = types[Math.floor(Math.random() * types.length)];
+                }
+            }
+
+            const info = state.data[state.currentTarget];
+            hp = info.hp;
+            targetEl.src = info.img;
+            targetEl.style.filter = `drop-shadow(0 0 25px ${info.aura})`;
+            if (state.active) actionLoop();
+        }
+
+        function gainExp(amt) {
+            state.exp += amt;
+            if (state.exp >= 100) { state.exp = 0; state.level++; levelOrb.innerText = state.level; }
+            expFill.style.width = state.exp + "%";
+        }
+
+        function useOre() {
+            if (state.ore >= state.oreReq) { state.ore -= state.oreReq; state.power += 0.5; state.oreReq = Math.floor(state.oreReq * 1.6); updateUI(); }
+        }
+
+        function useFish() {
+            if (state.fish >= state.fishReq && !state.isBuffed) {
+                state.fish -= state.fishReq; state.isBuffed = true;
+                const prevSpeed = state.speed; state.speed = 700;
+                const bar = document.getElementById('buff-progress');
+                bar.style.transition = "none"; bar.style.transform = "scaleX(1)";
+                setTimeout(() => { bar.style.transition = "transform 10s linear"; bar.style.transform = "scaleX(0)"; }, 50);
+                updateUI();
+                setTimeout(() => { state.isBuffed = false; state.speed = prevSpeed; updateUI(); }, 10000);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('coins').innerText = state.coins;
+            document.getElementById('ore').innerText = state.ore;
+            document.getElementById('fish').innerText = state.fish;
+            document.getElementById('ore-cost').innerText = state.oreReq;
+            document.getElementById('fish-cost').innerText = state.fishReq;
+            const fBtn = document.getElementById('btn-forge'), bBtn = document.getElementById('btn-buff');
+            if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
+            if (state.fish >= state.fishReq && !state.isBuffed) bBtn.classList.remove('disabled'); else bBtn.classList.add('disabled');
+        }
+        updateUI();
     </script>
 </body>
 </html>
