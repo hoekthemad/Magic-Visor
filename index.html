@@ -15,6 +15,8 @@
             --zone2-purple: #a020f0;
             --zone3-orange: #ff4500;
             --zone4-cyan: #00ffff;
+            /* Dynamic UI Color Variable */
+            --current-aura: var(--aura-green);
         }
 
         body {
@@ -34,19 +36,18 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);
         }
 
-        /* Fixed Circular XP Orb - Larger for big numbers */
         .orb-wrapper { position: relative; width: 85px; height: 85px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
         .xp-ring-svg { position: absolute; transform: rotate(-90deg); width: 100%; height: 100%; }
         .xp-ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 5; }
-        .xp-ring-fill { fill: none; stroke: var(--aura-green); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 251.2; stroke-dashoffset: 251.2; transition: stroke-dashoffset 0.4s ease, stroke 1s; }
-        #level-orb { font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 15px var(--aura-green); z-index: 2; transition: color 1s; }
+        .xp-ring-fill { fill: none; stroke: var(--current-aura); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 251.2; stroke-dashoffset: 251.2; transition: stroke-dashoffset 0.4s ease, stroke 1s; }
+        #level-orb { font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 15px var(--current-aura); z-index: 2; transition: color 1s; }
 
-        /* Command Slot Style matching screenshot */
         #command-slot {
             flex: 1; height: 55px; margin: 0 15px;
-            background: rgba(0, 0, 0, 0.3); border: 1.5px solid rgba(255,255,255,0.15);
+            background: rgba(0, 0, 0, 0.3); border: 1.5px solid var(--current-aura);
             border-radius: 30px; display: flex; align-items: center; justify-content: space-around;
-            padding: 0 10px; backdrop-filter: blur(15px); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            padding: 0 10px; backdrop-filter: blur(15px); box-shadow: 0 0 10px var(--current-aura), inset 0 0 10px rgba(0,0,0,0.5);
+            transition: border 1s, box-shadow 1s;
         }
         .cmd-btn { 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -54,7 +55,7 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         .cmd-btn.locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-        .cmd-label { font-size: 0.55rem; color: rgba(255,255,255,0.6); margin-bottom: 2px; }
+        .cmd-label { font-size: 0.55rem; color: white; margin-bottom: 2px; }
         .coin-icon { width: 14px; height: 14px; margin-left: 3px; vertical-align: middle; }
 
         .inventory-brief { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.9rem; font-weight: 900; min-width: 90px; }
@@ -91,13 +92,16 @@
         #footer { position: relative; height: 160px; background: #000; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 2px solid #333; z-index: 200; }
         
         .action-btn { position: relative; border-radius: 50%; background: #151515; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; touch-action: manipulation; }
-        .main-strike { width: 90px; height: 90px; border: 4px solid #555; }
+        .main-strike { width: 90px; height: 90px; border: 4px solid #555; transition: border 1s, box-shadow 1s; }
         .side-btn { width: 75px; height: 75px; border: 3px solid transparent; }
         #btn-forge { border-color: var(--aura-silver); color: var(--aura-silver); }
-        #btn-buff { border-color: var(--aura-blue); color: var(--aura-blue); }
+        
+        #btn-buff { border-color: rgba(255,255,255,0.1); color: var(--current-aura); transition: color 1s; }
+        .buff-ring-svg { position: absolute; top: -3px; left: -3px; width: 75px; height: 75px; transform: rotate(-90deg); pointer-events: none; }
+        .buff-ring-fill { fill: none; stroke: var(--current-aura); stroke-width: 3; stroke-dasharray: 226; stroke-dashoffset: 226; transition: stroke-dashoffset 0.1s linear, stroke 1s; }
+
         .side-btn.disabled { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
-        .active-glow { border-color: var(--aura-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
-        #buff-progress { position: absolute; bottom: 8px; width: 40px; height: 4px; background: var(--aura-blue); transform: scaleX(0); }
+        .active-glow { border-color: var(--current-aura) !important; box-shadow: 0 0 30px var(--current-aura); }
 
         #settings-cog { position: absolute; right: 20px; top: 15px; font-size: 2rem; color: #555; z-index: 400; text-shadow: 0 0 5px black; }
         #settings-menu { position: absolute; right: 20px; bottom: 70px; background: rgba(15, 15, 15, 0.95); border: 2px solid #444; border-radius: 8px; padding: 10px; display: none; flex-direction: column; gap: 10px; z-index: 300; }
@@ -138,9 +142,9 @@
         </div>
 
         <div class="inventory-brief">
-            <div style="color: var(--gold)"><span id="coins">0</span> ◈</div>
+            <div style="color: var(--gold)"><span id="coins">0</span> <img src="coin.png" class="coin-icon"></div>
             <div style="color: var(--aura-silver)"><span id="ore">0</span> ORE</div>
-            <div style="color: var(--aura-blue)"><span id="fish">0</span> FISH</div>
+            <div id="fish-count-ui" style="color: var(--aura-blue)"><span id="fish">0</span> FISH</div>
         </div>
     </div>
 
@@ -158,8 +162,10 @@
             <img src="attackicon.png" style="width:40px;">
         </div>
         <div id="btn-buff" class="action-btn side-btn disabled" onclick="useFish()">
+            <svg class="buff-ring-svg">
+                <circle id="buff-ring-fill" class="buff-ring-fill" cx="37.5" cy="37.5" r="36"></circle>
+            </svg>
             <div class="btn-val" id="fish-cost">3</div><div class="btn-label">VITAL</div>
-            <div id="buff-progress"></div>
         </div>
         
         <div id="settings-cog" onclick="toggleSettings()">⚙</div>
@@ -185,13 +191,18 @@
                 wolf_z2: { img: 'fire_wolf.png', aura: '#ff4500', hp: 2500 },
                 behemoth_z3: { img: 'behemoth.png', aura: '#ff0000', hp: 10000 },
                 reaper_z4: { img: 'frost_reaper.png', aura: '#00ffff', hp: 10000 },
-                titan_z4: { img: 'titan.png', aura: '#ffffff', hp: 50000 }
+                titan_z4: { img: 'titan.png', aura: '#ffffff', hp: 50000 },
+                // Zone-specific hunt images
+                z2_hunt: { img: 'fire_wolf.png', aura: '#ff4500', hp: 400 },
+                z3_hunt: { img: 'behemoth.png', aura: '#ff0000', hp: 1500 },
+                z4_hunt: { img: 'frost_reaper.png', aura: '#00ffff', hp: 5000 }
             }
         };
 
         const targetEl = document.getElementById('target');
         const weaponEl = document.getElementById('weapon-hand');
         const xpFillRing = document.getElementById('xp-fill-ring');
+        const buffFillRing = document.getElementById('buff-ring-fill');
         const levelOrb = document.getElementById('level-orb');
         const alertBox = document.getElementById('loot-alert');
         let hp = 100;
@@ -217,9 +228,6 @@
                 try {
                     const loaded = JSON.parse(savedData);
                     state = Object.assign(state, loaded); 
-                    if (isNaN(state.power)) state.power = 1;
-                    if (isNaN(state.coins)) state.coins = 0;
-                    if (isNaN(state.polish)) state.polish = 0;
                     state.active = false;
                     restoreVisuals();
                 } catch(e) { console.error("Load failed."); }
@@ -237,21 +245,25 @@
             levelOrb.innerText = state.level;
             updateXPOrb();
             const bg = document.getElementById('game-bg');
+            const root = document.querySelector(':root');
+            
+            let auraColor = "var(--aura-green)";
+            if (state.currentZone === 2) auraColor = "var(--zone2-purple)";
+            if (state.currentZone === 3) auraColor = "var(--zone3-orange)";
+            if (state.currentZone === 4) auraColor = "var(--zone4-cyan)";
+            
+            root.style.setProperty('--current-aura', auraColor);
+            document.getElementById('fish-count-ui').style.color = auraColor;
+
             if (state.currentZone >= 2) { 
-                levelOrb.style.color = "var(--zone2-purple)"; 
-                xpFillRing.style.stroke = "var(--zone2-purple)";
                 bg.style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)"; 
             }
             if (state.currentZone >= 3) { 
-                levelOrb.style.color = "var(--zone3-orange)"; 
-                xpFillRing.style.stroke = "var(--zone3-orange)";
                 bg.classList.add('heat-haze'); 
                 bg.style.filter = "sepia(1) saturate(2) hue-rotate(-30deg) brightness(0.3)"; 
             }
             if (state.currentZone >= 4) { 
                 bg.style.backgroundImage = "url('background2.png')"; 
-                levelOrb.style.color = "var(--zone4-cyan)"; 
-                xpFillRing.style.stroke = "var(--zone4-cyan)";
             }
             
             if (state.hasScythe) weaponEl.src = 'glacial_scythe.png';
@@ -311,8 +323,8 @@
                 if (!state.hasScythe && state.currentZone === 4 && Math.random() < 0.05) unlockItem('glacial_scythe.png', 'SCYTHE UNLOCKED!');
             } else {
                 state.coins += Math.round(10 * penalty * zMult);
-                if (state.currentTarget === 'mine') state.ore += Math.round(1 * penalty * zMult);
-                if (state.currentTarget === 'fish') state.fish += Math.round(1 * penalty * zMult);
+                if (state.currentTarget.includes('mine')) state.ore += Math.round(1 * penalty * zMult);
+                if (state.currentTarget.includes('fish')) state.fish += Math.round(1 * penalty * zMult);
             }
             gainExp(state.isBoss ? 200 * penalty : 25 * penalty);
             updateUI();
@@ -321,7 +333,7 @@
         }
 
         function buyBounty() {
-            if (state.forceBoss) return; // Only allow one boss queue
+            if (state.forceBoss) return;
             let costs = [0, 100, 500, 2500, 10000];
             let cost = costs[state.currentZone] || 10000;
             if (state.coins >= cost) { state.coins -= cost; state.forceBoss = true; updateUI(); }
@@ -379,19 +391,27 @@
             state.isBoss = false;
             let bK = ['boss_z1', 'wolf_z2', 'behemoth_z3', 'titan_z4'];
             let bossKey = bK[state.currentZone-1] || 'titan_z4';
+            
             if (state.forceBoss || (Math.random() < 0.10)) {
                 state.currentTarget = bossKey;
                 state.isBoss = true;
                 state.forceBoss = false;
                 targetEl.classList.add(state.currentZone > 1 ? 'wolf-boss' : 'boss-style');
             } else {
-                state.currentTarget = ['hunt', 'mine', 'fish'][Math.floor(Math.random()*3)];
+                // Determine hunt target based on zone
+                let pool = ['hunt', 'mine', 'fish'];
+                let type = pool[Math.floor(Math.random()*3)];
+                if (type === 'hunt' && state.currentZone > 1) {
+                    state.currentTarget = `z${state.currentZone}_hunt`;
+                } else {
+                    state.currentTarget = type;
+                }
             }
             const info = state.data[state.currentTarget];
             hp = info ? info.hp : 100;
             targetEl.src = info ? info.img : 'slime.png';
             targetEl.style.filter = `drop-shadow(0 0 25px ${info ? info.aura : '#fff'})`;
-            updateUI(); // Ensure bounty button unlocks/locks correctly on respawn
+            updateUI();
             if (state.active) actionLoop();
         }
 
@@ -402,7 +422,7 @@
         }
 
         function updateXPOrb() {
-            const circumference = 251.2; // 2 * PI * r(40)
+            const circumference = 251.2;
             const offset = circumference - (state.exp / 100) * circumference;
             xpFillRing.style.strokeDashoffset = offset;
         }
@@ -413,8 +433,26 @@
             if (state.fish >= state.fishReq && !state.isBuffed) {
                 state.fish -= state.fishReq; state.isBuffed = true;
                 const prevSpeed = state.speed; state.speed = 700;
+                
+                const duration = 10000;
+                const start = Date.now();
+                const circ = 226; 
+                
+                const timer = setInterval(() => {
+                    const elapsed = Date.now() - start;
+                    const remaining = Math.max(0, 1 - (elapsed / duration));
+                    buffFillRing.style.strokeDashoffset = circ * (1 - remaining);
+                    
+                    if (elapsed >= duration) {
+                        clearInterval(timer);
+                        state.isBuffed = false;
+                        state.speed = prevSpeed;
+                        buffFillRing.style.strokeDashoffset = 226;
+                        updateUI();
+                    }
+                }, 50);
+                
                 updateUI();
-                setTimeout(() => { state.isBuffed = false; state.speed = prevSpeed; updateUI(); }, 10000);
             }
         }
 
@@ -430,13 +468,12 @@
             let pB = [0, 500, 2500, 10000, 25000];
             document.getElementById('polish-cost').innerText = (pB[state.currentZone] || 25000) * (state.polish + 1);
             
-            // Toggle locked state for Bounty
             const bBtn = document.getElementById('btn-bounty');
             if (state.forceBoss) bBtn.classList.add('locked'); else bBtn.classList.remove('locked');
 
             const fBtn = document.getElementById('btn-forge'), buffBtn = document.getElementById('btn-buff');
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
-            if (state.fish >= state.fishReq && !state.isBuffed) buffBtn.classList.remove('disabled'); else buffBtn.classList.add('disabled');
+            if (state.fish >= state.fishReq && !state.isBuffed) buffBtn.classList.remove('disabled'); else if(state.isBuffed) buffBtn.classList.add('disabled'); else buffBtn.classList.add('disabled');
         }
 
         window.onload = () => { loadGame(); if (state.level === 1) { updateUI(); respawn(); updateXPOrb(); } };
