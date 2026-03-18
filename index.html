@@ -22,6 +22,8 @@
             margin: 0; height: 100vh; overflow: hidden;
             display: flex; flex-direction: column;
             font-family: 'Arial Black', sans-serif; user-select: none; color: white;
+            /* Fix for double-tap zoom */
+            touch-action: manipulation;
         }
 
         /* --- HUD --- */
@@ -76,7 +78,7 @@
         }
         .heat-haze { animation: haze 4s infinite ease-in-out; }
 
-        .target-img { width: 70vw; max-width: 260px; z-index: 10; transition: 0.4s; }
+        .target-img { width: 70vw; max-width: 260px; z-index: 10; transition: 0.4s; opacity: 1; }
         .boss-style { width: 85vw; max-width: 320px; filter: hue-rotate(-50deg) brightness(1.2) drop-shadow(0 0 30px var(--boss-red)) !important; }
         
         .wolf-boss { 
@@ -90,7 +92,7 @@
 
         /* --- FOOTER & SETTINGS --- */
         #footer { position: relative; height: 160px; background: #000; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 2px solid #333; z-index: 200; }
-        .action-btn { position: relative; border-radius: 50%; background: #151515; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }
+        .action-btn { position: relative; border-radius: 50%; background: #151515; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; touch-action: manipulation; }
         .main-strike { width: 90px; height: 90px; border: 4px solid #555; }
         .side-btn { width: 75px; height: 75px; border: 3px solid transparent; }
         #btn-forge { border-color: var(--aura-silver); background: rgba(189, 195, 199, 0.15); color: var(--aura-silver); }
@@ -101,7 +103,7 @@
         .active-glow { border-color: var(--aura-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
         #buff-progress { position: absolute; bottom: 8px; width: 40px; height: 4px; background: var(--aura-blue); transform: scaleX(0); }
 
-        #settings-cog { position: absolute; right: 20px; top: 15px; font-size: 2rem; color: #555; cursor: pointer; transition: 0.3s; z-index: 250; text-shadow: 0 0 5px black; }
+        #settings-cog { position: absolute; right: 20px; top: 15px; font-size: 2rem; color: #555; cursor: pointer; transition: 0.3s; z-index: 400; text-shadow: 0 0 5px black; touch-action: manipulation; }
         #settings-cog:active { transform: rotate(90deg) scale(0.9); }
         
         #settings-menu {
@@ -111,14 +113,14 @@
         }
         .set-btn {
             background: #222; color: white; border: 1px solid #555; border-radius: 5px;
-            padding: 10px 15px; font-family: 'Arial Black', sans-serif; cursor: pointer;
+            padding: 10px 15px; font-family: 'Arial Black', sans-serif; cursor: pointer; touch-action: manipulation;
         }
 
         /* Animations */
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
         .weapon-attack { animation: strike 0.4s ease-out forwards; }
         .hit-flash { filter: brightness(1.5) contrast(1.2) !important; transform: scale(1.05); }
-        .shatter { opacity: 0; transform: scale(1.8); filter: blur(20px) brightness(5); }
+        .shatter { opacity: 0 !important; transform: scale(1.8); filter: blur(20px) brightness(5); }
         
         #loot-alert { position: absolute; top: 120px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
 
@@ -171,7 +173,6 @@
     </div>
 
     <script>
-        // Console Easter Egg
         console.log("%c GLACIER TITAN IS WATCHING YOU ", "background: #00ffff; color: #000; font-size: 25px; font-weight: bold; padding: 10px; border-radius: 5px;");
         console.log("%cNice try, traveler. But true power is earned in the Tundra, not the console.", "color: #00ffff; font-style: italic;");
 
@@ -314,7 +315,12 @@
             gainExp(state.isBoss ? 200 * penalty : 25 * penalty);
             updateUI();
             checkProgression();
-            setTimeout(respawn, 1500);
+            
+            // Fix for PNG flashing: Clear source immediately after shatter
+            setTimeout(() => {
+                targetEl.src = "";
+                respawn();
+            }, 1500);
         }
 
         function unlockItem(img, text) {
@@ -344,7 +350,7 @@
             document.getElementById('travel-gate').style.display = 'none';
             if (state.currentZone === 2) { state.fishReq = 6; bg.style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)"; levelOrb.style.borderColor = "var(--zone2-purple)"; } 
             else if (state.currentZone === 3) { state.fishReq = 12; bg.classList.add('heat-haze'); bg.style.filter = "sepia(1) saturate(2) hue-rotate(-30deg) brightness(0.3)"; levelOrb.style.borderColor = "var(--zone3-orange)"; }
-            else if (state.currentZone === 4) { state.fishReq = 25; bg.classList.remove('heat-haze'); bg.style.backgroundImage = "url('background2.png')"; bg.style.filter = "brightness(0.7) contrast(1.2) saturate(0.5)"; levelOrb.style.borderColor = "var(--zone4-cyan)"; levelOrb.style.boxShadow = "0 0 20px var(--zone4-cyan)"; state.data.hunt = { img: 'frost_reaper.png', aura: 'var(--zone4-cyan)', hp: 10000 }; state.data.mine = { img: 'ore.png', aura: 'var(--zone4-cyan)', hp: 8000 }; state.data.fish = { img: 'fish.png', aura: 'var(--zone4-cyan)', hp: 8000 }; alert("Zone 4: Glacial Tundra."); }
+            else if (state.currentZone === 4) { state.fishReq = 25; bg.classList.remove('heat-haze'); bg.style.backgroundImage = "url('background2.png')"; bg.style.filter = "brightness(0.7) contrast(1.2) saturate(0.5)"; levelOrb.style.borderColor = "var(--zone4-cyan)"; levelOrb.style.boxShadow = "0 0 20px var(--zone4-cyan)"; state.data.hunt = { img: 'frost_reaper.png', aura: 'var(--zone4-cyan)', hp: 10000 }; state.data.mine = { img: 'ore.png', aura: 'var(--zone4-cyan)', hp: 8000 }; state.data.fish = { img: 'fish.png', aura: 'var(--zone4-cyan)', hp: 8000 }; }
             updateUI();
         }
 
@@ -365,7 +371,10 @@
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             }
             const info = state.data[state.currentTarget];
-            hp = info.hp; targetEl.src = info.img; targetEl.style.filter = `drop-shadow(0 0 25px ${info.aura})`;
+            hp = info.hp;
+            // Pre-load image source before showing
+            targetEl.src = info.img;
+            targetEl.style.filter = `drop-shadow(0 0 25px ${info.aura})`;
             if (state.active) actionLoop();
         }
 
@@ -399,7 +408,6 @@
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
             if (state.fish >= state.fishReq && !state.isBuffed) bBtn.classList.remove('disabled'); else bBtn.classList.add('disabled');
 
-            // HACKER DETECTION EASTER EGG
             if (state.coins > 100000000 || state.power > 5000) {
                 levelOrb.classList.add('cheater-orb');
                 alertBox.innerText = "CHEATER'S MARK DETECTED";
