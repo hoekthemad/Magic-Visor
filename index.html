@@ -27,39 +27,41 @@
 
         /* --- HUD --- */
         #hud-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 95px;
+            position: absolute; top: 0; left: 0; width: 100%; height: 110px;
             z-index: 100; display: flex; align-items: center; justify-content: space-between;
             padding: 0 15px; box-sizing: border-box;
-            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px);
+            background: linear-gradient(180deg, rgba(15, 25, 35, 0.9) 0%, rgba(15, 25, 35, 0.4) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);
         }
 
-        /* Circular XP Orb */
-        .orb-wrapper { position: relative; width: 65px; height: 65px; display: flex; justify-content: center; align-items: center; }
+        /* Fixed Circular XP Orb - Larger for big numbers */
+        .orb-wrapper { position: relative; width: 85px; height: 85px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
         .xp-ring-svg { position: absolute; transform: rotate(-90deg); width: 100%; height: 100%; }
-        .xp-ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 4; }
-        .xp-ring-fill { fill: none; stroke: var(--aura-green); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 188.5; stroke-dashoffset: 188.5; transition: stroke-dashoffset 0.4s ease, stroke 1s; }
-        #level-orb { font-size: 1.4rem; font-weight: 900; text-shadow: 0 0 10px var(--aura-green); z-index: 2; transition: color 1s; }
+        .xp-ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 5; }
+        .xp-ring-fill { fill: none; stroke: var(--aura-green); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 251.2; stroke-dashoffset: 251.2; transition: stroke-dashoffset 0.4s ease, stroke 1s; }
+        #level-orb { font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 15px var(--aura-green); z-index: 2; transition: color 1s; }
 
-        /* Command Slot (Replaced XP Bar) */
+        /* Command Slot Style matching screenshot */
         #command-slot {
-            flex: 1; height: 45px; margin: 0 12px;
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 25px; display: flex; align-items: center; justify-content: space-around;
-            padding: 0 5px; backdrop-filter: blur(10px);
+            flex: 1; height: 55px; margin: 0 15px;
+            background: rgba(0, 0, 0, 0.3); border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 30px; display: flex; align-items: center; justify-content: space-around;
+            padding: 0 10px; backdrop-filter: blur(15px); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         .cmd-btn { 
-            display: flex; align-items: center; gap: 5px; font-size: 0.6rem; color: var(--gold); 
-            cursor: pointer; padding: 5px 8px; border-radius: 15px; transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 0.65rem; color: var(--gold); cursor: pointer; transition: 0.2s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .cmd-btn:active { background: rgba(255,215,0,0.1); transform: scale(0.95); }
-        .coin-icon { width: 12px; height: 12px; vertical-align: middle; }
+        .cmd-btn.locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+        .cmd-label { font-size: 0.55rem; color: rgba(255,255,255,0.6); margin-bottom: 2px; }
+        .coin-icon { width: 14px; height: 14px; margin-left: 3px; vertical-align: middle; }
 
-        .inventory-brief { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.8rem; font-weight: 900; min-width: 70px; }
+        .inventory-brief { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.9rem; font-weight: 900; min-width: 90px; }
 
         /* --- TRAVEL GATE --- */
         #travel-gate {
-            position: absolute; top: 110px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: 125px; left: 50%; transform: translateX(-50%);
             padding: 10px 20px; background: rgba(160, 32, 240, 0.6);
             border: 2px solid white; border-radius: 20px;
             font-size: 0.8rem; color: white; display: none;
@@ -106,7 +108,7 @@
         .hit-shake { transform: scale(0.97) translate(4px, 0); filter: brightness(1.2) !important; transition: 0.04s !important; }
         .shatter { opacity: 0 !important; transition: opacity 1.2s linear !important; }
         
-        #loot-alert { position: absolute; top: 120px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
+        #loot-alert { position: absolute; top: 130px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
     </style>
 </head>
 <body>
@@ -116,20 +118,22 @@
 
     <div id="hud-container">
         <div class="orb-wrapper">
-            <svg class="xp-ring-svg" viewBox="0 0 65 65">
-                <circle class="xp-ring-bg" cx="32.5" cy="32.5" r="30"></circle>
-                <circle id="xp-fill-ring" class="xp-ring-fill" cx="32.5" cy="32.5" r="30"></circle>
+            <svg class="xp-ring-svg" viewBox="0 0 90 90">
+                <circle class="xp-ring-bg" cx="45" cy="45" r="40"></circle>
+                <circle id="xp-fill-ring" class="xp-ring-fill" cx="45" cy="45" r="40"></circle>
             </svg>
             <div id="level-orb">1</div>
         </div>
 
         <div id="command-slot">
-            <div class="cmd-btn" onclick="buyBounty()">
-                BOUNTY <span id="bounty-cost">100</span> <img src="coin.png" class="coin-icon">
+            <div id="btn-bounty" class="cmd-btn" onclick="buyBounty()">
+                <span class="cmd-label">BOUNTY</span>
+                <span><span id="bounty-cost">100</span> <img src="coin.png" class="coin-icon"></span>
             </div>
-            <div style="color: rgba(255,255,255,0.1); font-size: 1.2rem;">|</div>
+            <div style="color: rgba(255,255,255,0.1); font-size: 1.5rem; font-weight: 100;">|</div>
             <div class="cmd-btn" onclick="polishWeapon()">
-                POLISH +<span id="polish-lv">0</span> (<span id="polish-cost">500</span> <img src="coin.png" class="coin-icon">)
+                <span class="cmd-label">POLISH +<span id="polish-lv">0</span></span>
+                <span><span id="polish-cost">500</span> <img src="coin.png" class="coin-icon"></span>
             </div>
         </div>
 
@@ -317,6 +321,7 @@
         }
 
         function buyBounty() {
+            if (state.forceBoss) return; // Only allow one boss queue
             let costs = [0, 100, 500, 2500, 10000];
             let cost = costs[state.currentZone] || 10000;
             if (state.coins >= cost) { state.coins -= cost; state.forceBoss = true; updateUI(); }
@@ -386,6 +391,7 @@
             hp = info ? info.hp : 100;
             targetEl.src = info ? info.img : 'slime.png';
             targetEl.style.filter = `drop-shadow(0 0 25px ${info ? info.aura : '#fff'})`;
+            updateUI(); // Ensure bounty button unlocks/locks correctly on respawn
             if (state.active) actionLoop();
         }
 
@@ -396,7 +402,7 @@
         }
 
         function updateXPOrb() {
-            const circumference = 188.5; // 2 * PI * r(30)
+            const circumference = 251.2; // 2 * PI * r(40)
             const offset = circumference - (state.exp / 100) * circumference;
             xpFillRing.style.strokeDashoffset = offset;
         }
@@ -423,9 +429,14 @@
             document.getElementById('bounty-cost').innerText = bC[state.currentZone] || 10000;
             let pB = [0, 500, 2500, 10000, 25000];
             document.getElementById('polish-cost').innerText = (pB[state.currentZone] || 25000) * (state.polish + 1);
-            const fBtn = document.getElementById('btn-forge'), bBtn = document.getElementById('btn-buff');
+            
+            // Toggle locked state for Bounty
+            const bBtn = document.getElementById('btn-bounty');
+            if (state.forceBoss) bBtn.classList.add('locked'); else bBtn.classList.remove('locked');
+
+            const fBtn = document.getElementById('btn-forge'), buffBtn = document.getElementById('btn-buff');
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
-            if (state.fish >= state.fishReq && !state.isBuffed) bBtn.classList.remove('disabled'); else bBtn.classList.add('disabled');
+            if (state.fish >= state.fishReq && !state.isBuffed) buffBtn.classList.remove('disabled'); else buffBtn.classList.add('disabled');
         }
 
         window.onload = () => { loadGame(); if (state.level === 1) { updateUI(); respawn(); updateXPOrb(); } };
