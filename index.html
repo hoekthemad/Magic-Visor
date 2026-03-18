@@ -22,7 +22,6 @@
             margin: 0; height: 100vh; overflow: hidden;
             display: flex; flex-direction: column;
             font-family: 'Arial Black', sans-serif; user-select: none; color: white;
-            /* Fix for double-tap zoom */
             touch-action: manipulation;
         }
 
@@ -68,7 +67,7 @@
         }
 
         /* --- WORLD --- */
-        #world-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; }
+        #world-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; overflow: visible; }
         #game-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('background.png') no-repeat center center; background-size: cover; z-index: 0; transition: 3s ease-in-out; }
         
         @keyframes haze {
@@ -78,12 +77,12 @@
         }
         .heat-haze { animation: haze 4s infinite ease-in-out; }
 
-        .target-img { width: 70vw; max-width: 260px; z-index: 10; transition: 0.4s; opacity: 1; }
-        .boss-style { width: 85vw; max-width: 320px; filter: hue-rotate(-50deg) brightness(1.2) drop-shadow(0 0 30px var(--boss-red)) !important; }
+        /* Added padding to prevent aura clipping */
+        .target-img { width: 70vw; max-width: 260px; z-index: 10; transition: 0.4s; opacity: 1; padding: 50px; object-fit: contain; }
         
+        .boss-style { width: 85vw; max-width: 320px; }
         .wolf-boss { 
             width: 90vw; max-width: 380px; 
-            filter: drop-shadow(0 0 40px var(--zone3-orange)) brightness(1.3) !important;
             animation: breath 2s infinite ease-in-out;
         }
         @keyframes breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
@@ -103,6 +102,7 @@
         .active-glow { border-color: var(--aura-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
         #buff-progress { position: absolute; bottom: 8px; width: 40px; height: 4px; background: var(--aura-blue); transform: scaleX(0); }
 
+        /* Cog Index Fix */
         #settings-cog { position: absolute; right: 20px; top: 15px; font-size: 2rem; color: #555; cursor: pointer; transition: 0.3s; z-index: 400; text-shadow: 0 0 5px black; touch-action: manipulation; }
         #settings-cog:active { transform: rotate(90deg) scale(0.9); }
         
@@ -119,12 +119,18 @@
         /* Animations */
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
         .weapon-attack { animation: strike 0.4s ease-out forwards; }
-        .hit-flash { filter: brightness(1.5) contrast(1.2) !important; transform: scale(1.05); }
+        
+        /* Refined Aura Blink Hit Flash */
+        .hit-flash { 
+            filter: brightness(2) contrast(1.5) drop-shadow(0 0 80px white) !important; 
+            transform: scale(1.08); 
+            transition: 0.05s !important;
+        }
+        
         .shatter { opacity: 0 !important; transform: scale(1.8); filter: blur(20px) brightness(5); }
         
         #loot-alert { position: absolute; top: 120px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
 
-        /* Hacker Penalty Style */
         .cheater-orb { border-color: var(--boss-red) !important; color: var(--boss-red) !important; box-shadow: 0 0 40px var(--boss-red) !important; animation: breath 0.5s infinite !important; }
     </style>
 </head>
@@ -276,7 +282,7 @@
 
                 hp -= damage;
                 targetEl.classList.add('hit-flash');
-                setTimeout(() => targetEl.classList.remove('hit-flash'), 100);
+                setTimeout(() => targetEl.classList.remove('hit-flash'), 80);
                 if (hp <= 0) finishTarget();
                 else actionTimer = setTimeout(actionLoop, state.speed);
             }, 250);
@@ -316,7 +322,6 @@
             updateUI();
             checkProgression();
             
-            // Fix for PNG flashing: Clear source immediately after shatter
             setTimeout(() => {
                 targetEl.src = "";
                 respawn();
@@ -358,7 +363,10 @@
             targetEl.classList.remove('shatter', 'boss-style', 'wolf-boss');
             state.isBoss = false;
             if (state.currentZone === 4) {
-                if (state.level >= 125 && Math.random() < 0.12) { state.currentTarget = 'titan_z4'; state.isBoss = true; targetEl.classList.add('wolf-boss'); }
+                if (state.level >= 125 && Math.random() < 0.12) { 
+                    state.currentTarget = 'titan_z4'; state.isBoss = true; 
+                    targetEl.classList.add('wolf-boss'); 
+                }
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             } else if (state.currentZone === 3) {
                 if (state.level >= 90 && Math.random() < 0.12) { state.currentTarget = 'behemoth_z3'; state.isBoss = true; targetEl.classList.add('wolf-boss'); }
@@ -367,14 +375,21 @@
                 if (state.level >= 50 && Math.random() < 0.15) { state.currentTarget = 'wolf_z2'; state.isBoss = true; targetEl.classList.add('wolf-boss'); }
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             } else {
-                if (state.level >= 25 && Math.random() < 0.10) { state.currentTarget = 'boss_z1'; state.isBoss = true; targetEl.classList.add('boss-style'); }
+                if (state.level >= 25 && Math.random() < 0.10) { 
+                    state.currentTarget = 'boss_z1'; state.isBoss = true; 
+                    targetEl.classList.add('boss-style'); 
+                }
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             }
+            
             const info = state.data[state.currentTarget];
             hp = info.hp;
-            // Pre-load image source before showing
             targetEl.src = info.img;
-            targetEl.style.filter = `drop-shadow(0 0 25px ${info.aura})`;
+            
+            // Set base aura style
+            let dropVal = state.isBoss ? (state.currentTarget === 'boss_z1' ? '30px' : '40px') : '25px';
+            targetEl.style.filter = `drop-shadow(0 0 ${dropVal} ${info.aura})`;
+            
             if (state.active) actionLoop();
         }
 
