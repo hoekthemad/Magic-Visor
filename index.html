@@ -118,11 +118,11 @@
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
         .weapon-attack { animation: strike 0.4s ease-out forwards; }
         
-        /* SUBTLE HIT FLASH FIX - No "Square" shadow */
-        .hit-flash { 
-            filter: brightness(1.6) contrast(1.2) !important; 
-            transform: scale(1.04); 
-            transition: 0.05s !important;
+        /* SUBTLE HIT SHAKE - Replaced Flash to prevent box artifacts */
+        .hit-shake { 
+            transform: scale(0.97) translate(4px, 0); 
+            filter: brightness(1.2) !important;
+            transition: 0.04s !important;
         }
         
         .shatter { opacity: 0 !important; transform: scale(1.8); filter: blur(20px) brightness(5); }
@@ -177,9 +177,6 @@
     </div>
 
     <script>
-        console.log("%c GLACIER TITAN IS WATCHING YOU ", "background: #00ffff; color: #000; font-size: 25px; font-weight: bold; padding: 10px; border-radius: 5px;");
-        console.log("%cNice try, traveler. But true power is earned in the Tundra, not the console.", "color: #00ffff; font-style: italic;");
-
         let state = {
             level: 1, exp: 0, coins: 0, ore: 0, fish: 0,
             active: false, power: 1, speed: 2500,
@@ -279,8 +276,8 @@
                 if (state.hasScythe) damage *= 4; 
 
                 hp -= damage;
-                targetEl.classList.add('hit-flash');
-                setTimeout(() => targetEl.classList.remove('hit-flash'), 50);
+                targetEl.classList.add('hit-shake');
+                setTimeout(() => targetEl.classList.remove('hit-shake'), 40);
                 if (hp <= 0) finishTarget();
                 else actionTimer = setTimeout(actionLoop, state.speed);
             }, 250);
