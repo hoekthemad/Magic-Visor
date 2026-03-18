@@ -192,7 +192,6 @@
                 behemoth_z3: { img: 'behemoth.png', aura: '#ff0000', hp: 10000 },
                 reaper_z4: { img: 'frost_reaper.png', aura: '#00ffff', hp: 10000 },
                 titan_z4: { img: 'titan.png', aura: '#ffffff', hp: 50000 },
-                // Zone-specific hunt images
                 z2_hunt: { img: 'fire_wolf.png', aura: '#ff4500', hp: 400 },
                 z3_hunt: { img: 'behemoth.png', aura: '#ff0000', hp: 1500 },
                 z4_hunt: { img: 'frost_reaper.png', aura: '#00ffff', hp: 5000 }
@@ -398,7 +397,6 @@
                 state.forceBoss = false;
                 targetEl.classList.add(state.currentZone > 1 ? 'wolf-boss' : 'boss-style');
             } else {
-                // Determine hunt target based on zone
                 let pool = ['hunt', 'mine', 'fish'];
                 let type = pool[Math.floor(Math.random()*3)];
                 if (type === 'hunt' && state.currentZone > 1) {
@@ -430,8 +428,9 @@
         function useOre() { if (state.ore >= state.oreReq) { state.ore -= state.oreReq; state.power += 0.5; state.oreReq = Math.floor(state.oreReq * 1.6); updateUI(); } }
 
         function useFish() {
-            if (state.fish >= state.fishReq && !state.isBuffed) {
-                state.fish -= state.fishReq; state.isBuffed = true;
+            const currentFishReq = [0, 3, 15, 50, 200][state.currentZone] || 200;
+            if (state.fish >= currentFishReq && !state.isBuffed) {
+                state.fish -= currentFishReq; state.isBuffed = true;
                 const prevSpeed = state.speed; state.speed = 700;
                 
                 const duration = 10000;
@@ -461,7 +460,12 @@
             document.getElementById('ore').innerText = state.ore;
             document.getElementById('fish').innerText = state.fish;
             document.getElementById('ore-cost').innerText = state.oreReq;
-            document.getElementById('fish-cost').innerText = state.fishReq;
+            
+            // Scaled Fish cost per zone
+            let fCosts = [0, 3, 15, 50, 200];
+            let currentFishReq = fCosts[state.currentZone] || 200;
+            document.getElementById('fish-cost').innerText = currentFishReq;
+            
             document.getElementById('polish-lv').innerText = state.polish;
             let bC = [0, 100, 500, 2500, 10000];
             document.getElementById('bounty-cost').innerText = bC[state.currentZone] || 10000;
@@ -473,7 +477,7 @@
 
             const fBtn = document.getElementById('btn-forge'), buffBtn = document.getElementById('btn-buff');
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
-            if (state.fish >= state.fishReq && !state.isBuffed) buffBtn.classList.remove('disabled'); else if(state.isBuffed) buffBtn.classList.add('disabled'); else buffBtn.classList.add('disabled');
+            if (state.fish >= currentFishReq && !state.isBuffed) buffBtn.classList.remove('disabled'); else if(state.isBuffed) buffBtn.classList.add('disabled'); else buffBtn.classList.add('disabled');
         }
 
         window.onload = () => { loadGame(); if (state.level === 1) { updateUI(); respawn(); updateXPOrb(); } };
