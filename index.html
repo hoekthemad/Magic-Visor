@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Visor - The Volcanic Forest</title>
+    <title>Magic Visor - Glacial Tundra</title>
     <style>
         :root {
             --bg-dark: #050505;
@@ -14,39 +14,30 @@
             --boss-red: #ff4444;
             --zone2-purple: #a020f0;
             --zone3-orange: #ff4500;
+            --zone4-cyan: #00ffff;
         }
 
         body {
             background-color: var(--bg-dark);
-            margin: 0;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            font-family: 'Arial Black', sans-serif;
-            user-select: none;
-            color: white;
+            margin: 0; height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+            font-family: 'Arial Black', sans-serif; user-select: none; color: white;
         }
 
         /* --- HUD --- */
         #hud-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 95px;
-            z-index: 100;
-            display: flex; align-items: center; justify-content: space-between;
+            position: absolute; top: 0; left: 0; width: 100%; height: 95px;
+            z-index: 100; display: flex; align-items: center; justify-content: space-between;
             padding: 0 20px; box-sizing: border-box;
             background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px);
         }
 
         .hud-orb {
-            width: 55px; height: 55px;
-            border-radius: 50%; border: 3px solid var(--aura-green);
+            width: 55px; height: 55px; border-radius: 50%; border: 3px solid var(--aura-green);
             display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 1.4rem;
-            box-shadow: 0 0 20px var(--aura-green);
-            transition: border-color 1s;
+            font-weight: bold; font-size: 1.4rem; box-shadow: 0 0 20px var(--aura-green);
+            transition: 1s;
         }
 
         #exp-bar-container {
@@ -55,15 +46,9 @@
             overflow: hidden;
         }
 
-        #exp-fill {
-            width: 0%; height: 100%; background: var(--aura-green);
-            box-shadow: 0 0 15px var(--aura-green); transition: width 0.4s ease;
-        }
+        #exp-fill { width: 0%; height: 100%; background: var(--aura-green); box-shadow: 0 0 15px var(--aura-green); transition: width 0.4s ease; }
 
-        .inventory-brief {
-            display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
-            font-size: 0.9rem; font-weight: 900;
-        }
+        .inventory-brief { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.9rem; font-weight: 900; }
 
         /* --- TRAVEL GATE --- */
         #travel-gate {
@@ -71,21 +56,19 @@
             padding: 10px 20px; background: rgba(160, 32, 240, 0.6);
             border: 2px solid white; border-radius: 20px;
             font-size: 0.8rem; color: white; display: none;
-            z-index: 500; cursor: pointer; text-align: center;
-            animation: pulse 2s infinite;
+            z-index: 500; cursor: pointer; text-align: center; animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0% { transform: translateX(-50%) scale(1); box-shadow: 0 0 5px white; }
-            50% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 25px var(--zone3-orange); }
+            50% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 25px var(--zone4-cyan); }
             100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 5px white; }
         }
 
         /* --- WORLD --- */
         #world-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; }
-        #game-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('background.png') no-repeat center center; background-size: cover; z-index: 0; transition: 2s ease-in-out; }
+        #game-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('background.png') no-repeat center center; background-size: cover; z-index: 0; transition: 3s ease-in-out; }
         
-        /* Heat Haze for Zone 3 */
         @keyframes haze {
             0% { filter: hue-rotate(0deg) contrast(1); }
             50% { filter: hue-rotate(10deg) contrast(1.2) brightness(1.1); transform: scale(1.01); }
@@ -99,14 +82,14 @@
         .wolf-boss { 
             width: 90vw; max-width: 380px; 
             filter: drop-shadow(0 0 40px var(--zone3-orange)) brightness(1.3) !important;
-            animation: wolf-breath 2s infinite ease-in-out;
+            animation: breath 2s infinite ease-in-out;
         }
-        @keyframes wolf-breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        @keyframes breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
         #weapon-hand { position: absolute; bottom: -20px; right: -20px; width: 300px; z-index: 50; pointer-events: none; transform-origin: bottom right; }
 
-        /* --- FOOTER --- */
-        #footer { height: 160px; background: #000; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 2px solid #333; z-index: 200; }
+        /* --- FOOTER & SETTINGS --- */
+        #footer { position: relative; height: 160px; background: #000; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 2px solid #333; z-index: 200; }
         .action-btn { position: relative; border-radius: 50%; background: #151515; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }
         .main-strike { width: 90px; height: 90px; border: 4px solid #555; }
         .side-btn { width: 75px; height: 75px; border: 3px solid transparent; }
@@ -117,6 +100,19 @@
         .side-btn.disabled { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
         .active-glow { border-color: var(--aura-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
         #buff-progress { position: absolute; bottom: 8px; width: 40px; height: 4px; background: var(--aura-blue); transform: scaleX(0); }
+
+        #settings-cog { position: absolute; right: 20px; bottom: 20px; font-size: 2rem; color: #555; cursor: pointer; transition: 0.3s; z-index: 250; text-shadow: 0 0 5px black; }
+        #settings-cog:active { transform: rotate(90deg) scale(0.9); }
+        
+        #settings-menu {
+            position: absolute; right: 20px; bottom: 70px; background: rgba(15, 15, 15, 0.95);
+            border: 2px solid #444; border-radius: 8px; padding: 10px;
+            display: none; flex-direction: column; gap: 10px; z-index: 300;
+        }
+        .set-btn {
+            background: #222; color: white; border: 1px solid #555; border-radius: 5px;
+            padding: 10px 15px; font-family: 'Arial Black', sans-serif; cursor: pointer;
+        }
 
         /* Animations */
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
@@ -163,14 +159,20 @@
             <div class="btn-label">VITAL</div>
             <div id="buff-progress"></div>
         </div>
+        
+        <div id="settings-cog" onclick="toggleSettings()">⚙</div>
+        <div id="settings-menu">
+            <button class="set-btn" onclick="saveGame()" style="color: var(--aura-green);">SAVE PROGRESS</button>
+            <button class="set-btn" onclick="deleteSave()" style="color: var(--boss-red);">DELETE SAVE</button>
+        </div>
     </div>
 
     <script>
-        const state = {
+        let state = {
             level: 1, exp: 0, coins: 0, ore: 0, fish: 0,
             active: false, power: 1, speed: 2500,
             isBuffed: false, oreReq: 5, fishReq: 3,
-            hasSword: false, hasDagger: false, hasGreatsword: false,
+            hasSword: false, hasDagger: false, hasGreatsword: false, hasScythe: false,
             currentZone: 1,
             isBoss: false, currentTarget: 'hunt',
             data: {
@@ -179,7 +181,9 @@
                 fish: { img: 'fish.png', aura: '#00d4ff', hp: 100 },
                 boss_z1: { img: 'slime.png', aura: '#ff4444', hp: 500 },
                 wolf_z2: { img: 'fire_wolf.png', aura: '#ff4500', hp: 2500 },
-                behemoth_z3: { img: 'behemoth.png', aura: '#ff0000', hp: 10000 }
+                behemoth_z3: { img: 'behemoth.png', aura: '#ff0000', hp: 10000 },
+                reaper_z4: { img: 'frost_reaper.png', aura: '#00ffff', hp: 10000 },
+                titan_z4: { img: 'titan.png', aura: '#00ffff', hp: 50000 }
             }
         };
 
@@ -190,6 +194,73 @@
         let hp = 100;
         let actionTimer = null;
 
+        /* --- SAVE & LOAD SYSTEM --- */
+        function toggleSettings() {
+            const menu = document.getElementById('settings-menu');
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function saveGame() {
+            const stateToSave = { ...state, active: false }; // Don't save the auto-attack running state
+            localStorage.setItem('magicVisorSave', JSON.stringify(stateToSave));
+            
+            const alertBox = document.getElementById('loot-alert');
+            alertBox.innerText = "GAME SAVED!";
+            alertBox.style.color = "var(--aura-green)";
+            alertBox.style.opacity = "1";
+            setTimeout(() => { alertBox.style.opacity = "0"; alertBox.style.color = "var(--gold)"; }, 2000);
+            toggleSettings();
+        }
+
+        function deleteSave() {
+            if (confirm("Are you sure you want to delete all progress? This cannot be undone.")) {
+                localStorage.removeItem('magicVisorSave');
+                location.reload();
+            }
+        }
+
+        function loadGame() {
+            const savedData = localStorage.getItem('magicVisorSave');
+            if (savedData) {
+                state = JSON.parse(savedData);
+                state.active = false; 
+                restoreVisuals();
+            }
+        }
+
+        function restoreVisuals() {
+            levelOrb.innerText = state.level;
+            expFill.style.width = state.exp + "%";
+            
+            const bg = document.getElementById('game-bg');
+            if (state.currentZone >= 2) {
+                levelOrb.style.borderColor = "var(--zone2-purple)";
+                bg.style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)";
+            }
+            if (state.currentZone >= 3) {
+                levelOrb.style.borderColor = "var(--zone3-orange)";
+                bg.classList.add('heat-haze');
+                bg.style.filter = "sepia(1) saturate(2) hue-rotate(-30deg) brightness(0.3)";
+            }
+            if (state.currentZone >= 4) {
+                bg.classList.remove('heat-haze');
+                bg.style.backgroundImage = "url('background2.png')";
+                bg.style.filter = "brightness(0.7) contrast(1.2) saturate(0.5)";
+                levelOrb.style.borderColor = "var(--zone4-cyan)";
+                levelOrb.style.boxShadow = "0 0 20px var(--zone4-cyan)";
+            }
+
+            if (state.hasScythe) weaponEl.src = 'glacial_scythe.png';
+            else if (state.hasGreatsword) weaponEl.src = 'magma_greatsword.png';
+            else if (state.hasDagger) weaponEl.src = 'wolf_dagger.png';
+            else if (state.hasSword) weaponEl.src = 'sword.png';
+
+            updateUI();
+            checkProgression();
+            respawn(); 
+        }
+
+        /* --- CORE GAMEPLAY --- */
         function toggleAuto() {
             state.active = !state.active;
             document.getElementById('main-action').classList.toggle('active-glow', state.active);
@@ -209,6 +280,7 @@
                 if (state.hasSword) damage *= 2;
                 if (state.hasDagger) damage *= 1.5; 
                 if (state.hasGreatsword) damage *= 3; 
+                if (state.hasScythe) damage *= 4; // Z4 Weapon Multiplier
 
                 hp -= damage;
                 targetEl.classList.add('hit-flash');
@@ -222,14 +294,20 @@
             clearTimeout(actionTimer);
             targetEl.classList.add('shatter');
 
-            // Penalty Logic (The "Curse")
+            // Compound Penalty Logic (Mutex logic prevents bleeding across zones)
             let penalty = 1.0;
-            if (state.currentZone === 1 && state.hasSword) penalty = 0.5;
-            if (state.currentZone === 2 && state.hasDagger) penalty = 0.33; // 3x worse to farm Zone 2
+            if (state.currentZone === 1 && state.hasSword) {
+                penalty = 0.5;
+            } else if (state.currentZone === 2 && state.hasDagger) {
+                penalty = 0.33;
+            } else if (state.currentZone === 3 && state.hasGreatsword) {
+                penalty = 0.25;
+            }
 
             let zoneMult = 1.0;
             if (state.currentZone === 2) zoneMult = 2.0;
-            if (state.currentZone === 3) zoneMult = 5.0; // Significant jump for Zone 3
+            if (state.currentZone === 3) zoneMult = 5.0;
+            if (state.currentZone === 4) zoneMult = 10.0;
             
             if (state.currentTarget === 'boss_z1') {
                 state.coins += Math.round(100 * penalty);
@@ -238,10 +316,13 @@
                 state.coins += Math.round(500 * penalty);
                 if (!state.hasDagger && Math.random() < 0.15) unlockItem('wolf_dagger.png', 'WOLF DAGGER UNLOCKED!');
             } else if (state.currentTarget === 'behemoth_z3') {
-                state.coins += 2500;
-                if (!state.hasGreatsword && Math.random() < 0.10) unlockItem('greatsword.png', 'FLAME GREATSWORD UNLOCKED!');
+                state.coins += Math.round(2500 * penalty);
+                if (!state.hasGreatsword && Math.random() < 0.05) unlockItem('magma_greatsword.png', 'MAGMA GREATSWORD UNLOCKED!');
+            } else if (state.currentTarget === 'titan_z4') {
+                state.coins += Math.round(10000 * penalty);
+                if (!state.hasScythe && Math.random() < 0.05) unlockItem('glacial_scythe.png', 'GLACIAL SCYTHE UNLOCKED!');
             } else {
-                if (state.currentTarget === 'hunt') state.coins += Math.round((state.isBoss ? 50 : 10) * penalty * zoneMult);
+                state.coins += Math.round((state.isBoss ? 50 : 10) * penalty * zoneMult);
                 if (state.currentTarget === 'mine') state.ore += Math.round(1 * penalty * zoneMult);
                 if (state.currentTarget === 'fish') state.fish += Math.round(1 * penalty * zoneMult);
             }
@@ -256,25 +337,31 @@
             if (img.includes('sword')) state.hasSword = true;
             if (img.includes('dagger')) state.hasDagger = true;
             if (img.includes('greatsword')) state.hasGreatsword = true;
+            if (img.includes('scythe')) state.hasScythe = true;
             weaponEl.src = img;
             const alertBox = document.getElementById('loot-alert');
             alertBox.innerText = text;
+            alertBox.style.color = "var(--gold)";
             alertBox.style.opacity = "1";
             setTimeout(() => alertBox.style.opacity = "0", 3000);
+            checkProgression();
         }
 
         function checkProgression() {
             const gate = document.getElementById('travel-gate');
-            // Zone 1 -> 2
             if (state.level >= 35 && state.hasSword && state.currentZone === 1) {
                 gate.style.display = 'block';
                 gate.innerHTML = "ZONE 2: BLIGHTED PEAK<br><span style='font-size: 0.6rem;'>CURSE WILL BE LIFTED</span>";
             }
-            // Zone 2 -> 3
             else if (state.level >= 75 && state.hasDagger && state.currentZone === 2) {
                 gate.style.display = 'block';
                 gate.style.background = "rgba(255, 69, 0, 0.6)";
                 gate.innerHTML = "ZONE 3: VOLCANIC FOREST<br><span style='font-size: 0.6rem;'>LIFT THE WOLF'S CURSE</span>";
+            }
+            else if (state.level >= 100 && state.hasGreatsword && state.currentZone === 3) {
+                gate.style.display = 'block';
+                gate.style.background = "rgba(0, 255, 255, 0.6)";
+                gate.innerHTML = "ZONE 4: GLACIAL TUNDRA<br><span style='font-size: 0.6rem;'>THE MAGMA WILL FREEZE</span>";
             } else {
                 gate.style.display = 'none';
             }
@@ -282,30 +369,34 @@
 
         function advanceZone() {
             state.currentZone++;
+            const bg = document.getElementById('game-bg');
             document.getElementById('travel-gate').style.display = 'none';
             
             if (state.currentZone === 2) {
                 state.fishReq = 6;
-                document.getElementById('game-bg').style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)";
+                bg.style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)";
                 levelOrb.style.borderColor = "var(--zone2-purple)";
                 state.data.hunt = { img: 'slime.png', aura: 'var(--boss-red)', hp: 500 }; 
-                state.data.mine = { img: 'ore.png', aura: 'var(--zone2-purple)', hp: 400 };
-                state.data.fish = { img: 'fish.png', aura: 'var(--zone2-purple)', hp: 400 };
-                alert("Zone 2 Entered. Resource yields doubled. Beware of the Fire Wolf.");
             } 
             else if (state.currentZone === 3) {
                 state.fishReq = 12;
-                document.getElementById('game-bg').classList.add('heat-haze');
-                document.getElementById('game-bg').style.filter = "sepia(1) saturate(2) hue-rotate(-30deg) brightness(0.3)";
+                bg.classList.add('heat-haze');
+                bg.style.filter = "sepia(1) saturate(2) hue-rotate(-30deg) brightness(0.3)";
                 levelOrb.style.borderColor = "var(--zone3-orange)";
-                
-                // Fire Wolf is now the "Slime" of Zone 3
                 state.data.hunt = { img: 'fire_wolf.png', aura: 'var(--zone3-orange)', hp: 2000 };
-                state.data.mine = { img: 'ore.png', aura: 'var(--zone3-orange)', hp: 1500 };
-                state.data.fish = { img: 'fish.png', aura: 'var(--zone3-orange)', hp: 1500 };
-                alert("Zone 3 Entered: Volcanic Forest. The heat intensifies. Fire Wolves are now common.");
             }
-            
+            else if (state.currentZone === 4) {
+                state.fishReq = 25;
+                bg.classList.remove('heat-haze');
+                bg.style.backgroundImage = "url('background2.png')";
+                bg.style.filter = "brightness(0.7) contrast(1.2) saturate(0.5)";
+                levelOrb.style.borderColor = "var(--zone4-cyan)";
+                levelOrb.style.boxShadow = "0 0 20px var(--zone4-cyan)";
+                state.data.hunt = { img: 'frost_reaper.png', aura: 'var(--zone4-cyan)', hp: 10000 };
+                state.data.mine = { img: 'ore.png', aura: 'var(--zone4-cyan)', hp: 8000 };
+                state.data.fish = { img: 'fish.png', aura: 'var(--zone4-cyan)', hp: 8000 };
+                alert("Zone 4: Glacial Tundra. A new frozen threat emerges.");
+            }
             updateUI();
         }
 
@@ -313,8 +404,19 @@
             targetEl.classList.remove('shatter', 'boss-style', 'wolf-boss');
             state.isBoss = false;
 
-            if (state.currentZone === 3) {
-                if (state.level >= 100 && Math.random() < 0.15) {
+            if (state.currentZone === 4) {
+                // Glacier Titan starts spawning at Level 125
+                if (state.level >= 125 && Math.random() < 0.12) {
+                    state.currentTarget = 'titan_z4';
+                    state.isBoss = true;
+                    targetEl.classList.add('wolf-boss'); // Reuse the pulsing scale animation
+                } else {
+                    const types = ['hunt', 'mine', 'fish'];
+                    state.currentTarget = types[Math.floor(Math.random() * types.length)];
+                }
+            }
+            else if (state.currentZone === 3) {
+                if (state.level >= 90 && Math.random() < 0.12) {
                     state.currentTarget = 'behemoth_z3';
                     state.isBoss = true;
                     targetEl.classList.add('wolf-boss');
@@ -330,7 +432,6 @@
                 } else {
                     const types = ['hunt', 'mine', 'fish'];
                     state.currentTarget = types[Math.floor(Math.random() * types.length)];
-                    if (state.currentTarget === 'hunt') { state.isBoss = true; targetEl.classList.add('boss-style'); }
                 }
             } else {
                 if (state.level >= 25 && Math.random() < 0.10) {
@@ -382,7 +483,15 @@
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
             if (state.fish >= state.fishReq && !state.isBuffed) bBtn.classList.remove('disabled'); else bBtn.classList.add('disabled');
         }
-        updateUI();
+
+        // Initialize
+        window.onload = () => {
+            loadGame();
+            if (state.level === 1 && state.exp === 0) {
+                updateUI(); // Run standard init if no save is found
+                respawn();
+            }
+        };
     </script>
 </body>
 </html>
