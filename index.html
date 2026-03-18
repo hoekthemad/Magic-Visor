@@ -27,6 +27,14 @@
             touch-action: manipulation;
         }
 
+        /* Hacker Overlay */
+        #hacker-overlay {
+            position: fixed; inset: 0; background: rgba(0, 50, 0, 0.8);
+            color: #0f0; font-family: 'Courier New', monospace;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; text-shadow: 0 0 10px #0f0; pointer-events: none;
+        }
+
         /* --- HUD --- */
         #hud-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 110px;
@@ -59,6 +67,7 @@
         .coin-icon { width: 14px; height: 14px; margin-left: 3px; vertical-align: middle; }
 
         .inventory-brief { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.9rem; font-weight: 900; min-width: 90px; }
+        #zone-mult-ui { font-size: 0.6rem; color: var(--aura-green); opacity: 0.8; margin-top: -2px; }
 
         /* --- TRAVEL GATE --- */
         #travel-gate {
@@ -117,6 +126,7 @@
 </head>
 <body>
 
+    <div id="hacker-overlay"><h1>HACKER DETECTED</h1><p>RELOADING LOGS...</p></div>
     <div id="loot-alert">ITEM UNLOCKED!</div>
     <div id="travel-gate" onclick="advanceZone()">NEXT ZONE</div>
 
@@ -143,6 +153,7 @@
 
         <div class="inventory-brief">
             <div style="color: var(--gold)"><span id="coins">0</span> <img src="coin.png" class="coin-icon"></div>
+            <div id="zone-mult-ui">LOOT: x1</div>
             <div style="color: var(--aura-silver)"><span id="ore">0</span> ORE</div>
             <div id="fish-count-ui" style="color: var(--aura-blue)"><span id="fish">0</span> FISH</div>
         </div>
@@ -253,6 +264,7 @@
             
             root.style.setProperty('--current-aura', auraColor);
             document.getElementById('fish-count-ui').style.color = auraColor;
+            document.getElementById('zone-mult-ui').style.color = auraColor;
 
             if (state.currentZone >= 2) { 
                 bg.style.filter = "hue-rotate(140deg) brightness(0.4) contrast(1.5)"; 
@@ -456,16 +468,21 @@
         }
 
         function updateUI() {
+            // Hacker Check
+            if (state.coins > 1000000000) { document.getElementById('hacker-overlay').style.display = 'flex'; }
+
             document.getElementById('coins').innerText = Math.floor(state.coins || 0);
             document.getElementById('ore').innerText = state.ore;
             document.getElementById('fish').innerText = state.fish;
             document.getElementById('ore-cost').innerText = state.oreReq;
             
-            // Scaled Fish cost per zone
             let fCosts = [0, 3, 15, 50, 200];
             let currentFishReq = fCosts[state.currentZone] || 200;
             document.getElementById('fish-cost').innerText = currentFishReq;
             
+            let zMults = [0, 1, 2, 5, 10];
+            document.getElementById('zone-mult-ui').innerText = `LOOT: x${zMults[state.currentZone] || 1}`;
+
             document.getElementById('polish-lv').innerText = state.polish;
             let bC = [0, 100, 500, 2500, 10000];
             document.getElementById('bounty-cost').innerText = bC[state.currentZone] || 10000;
