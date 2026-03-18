@@ -118,14 +118,18 @@
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
         .weapon-attack { animation: strike 0.4s ease-out forwards; }
         
-        /* SUBTLE HIT SHAKE - Replaced Flash to prevent box artifacts */
         .hit-shake { 
             transform: scale(0.97) translate(4px, 0); 
             filter: brightness(1.2) !important;
             transition: 0.04s !important;
         }
         
-        .shatter { opacity: 0 !important; transform: scale(1.8); filter: blur(20px) brightness(5); }
+        /* DEATH ANIMATION FIX - Simple slow fade-out */
+        .shatter { 
+            opacity: 0 !important; 
+            transition: opacity 1.2s linear !important; /* Slow fade */
+            /* Removed blur, pop, and brightness scaling */
+        }
         
         #loot-alert { position: absolute; top: 120px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
 
@@ -177,6 +181,9 @@
     </div>
 
     <script>
+        console.log("%c GLACIER TITAN IS WATCHING YOU ", "background: #00ffff; color: #000; font-size: 25px; font-weight: bold; padding: 10px; border-radius: 5px;");
+        console.log("%cNice try, traveler. But true power is earned in the Tundra, not the console.", "color: #00ffff; font-style: italic;");
+
         let state = {
             level: 1, exp: 0, coins: 0, ore: 0, fish: 0,
             active: false, power: 1, speed: 2500,
@@ -317,10 +324,11 @@
             updateUI();
             checkProgression();
             
+            // Timeout adjusted to allow full fade before clearing src
             setTimeout(() => {
                 targetEl.src = "";
                 respawn();
-            }, 1500);
+            }, 1500); 
         }
 
         function unlockItem(img, text) {
@@ -355,6 +363,7 @@
         }
 
         function respawn() {
+            // Shatter class is removed here to reset opacity for the new target
             targetEl.classList.remove('shatter', 'boss-style', 'wolf-boss');
             state.isBoss = false;
             if (state.currentZone === 4) {
