@@ -77,7 +77,6 @@
         }
         .heat-haze { animation: haze 4s infinite ease-in-out; }
 
-        /* Added padding to prevent aura clipping */
         .target-img { width: 70vw; max-width: 260px; z-index: 10; transition: 0.4s; opacity: 1; padding: 50px; object-fit: contain; }
         
         .boss-style { width: 85vw; max-width: 320px; }
@@ -102,7 +101,6 @@
         .active-glow { border-color: var(--aura-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
         #buff-progress { position: absolute; bottom: 8px; width: 40px; height: 4px; background: var(--aura-blue); transform: scaleX(0); }
 
-        /* Cog Index Fix */
         #settings-cog { position: absolute; right: 20px; top: 15px; font-size: 2rem; color: #555; cursor: pointer; transition: 0.3s; z-index: 400; text-shadow: 0 0 5px black; touch-action: manipulation; }
         #settings-cog:active { transform: rotate(90deg) scale(0.9); }
         
@@ -120,10 +118,10 @@
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
         .weapon-attack { animation: strike 0.4s ease-out forwards; }
         
-        /* Refined Aura Blink Hit Flash */
+        /* SUBTLE HIT FLASH FIX - No "Square" shadow */
         .hit-flash { 
-            filter: brightness(2) contrast(1.5) drop-shadow(0 0 80px white) !important; 
-            transform: scale(1.08); 
+            filter: brightness(1.6) contrast(1.2) !important; 
+            transform: scale(1.04); 
             transition: 0.05s !important;
         }
         
@@ -282,7 +280,7 @@
 
                 hp -= damage;
                 targetEl.classList.add('hit-flash');
-                setTimeout(() => targetEl.classList.remove('hit-flash'), 80);
+                setTimeout(() => targetEl.classList.remove('hit-flash'), 50);
                 if (hp <= 0) finishTarget();
                 else actionTimer = setTimeout(actionLoop, state.speed);
             }, 250);
@@ -363,10 +361,7 @@
             targetEl.classList.remove('shatter', 'boss-style', 'wolf-boss');
             state.isBoss = false;
             if (state.currentZone === 4) {
-                if (state.level >= 125 && Math.random() < 0.12) { 
-                    state.currentTarget = 'titan_z4'; state.isBoss = true; 
-                    targetEl.classList.add('wolf-boss'); 
-                }
+                if (state.level >= 125 && Math.random() < 0.12) { state.currentTarget = 'titan_z4'; state.isBoss = true; targetEl.classList.add('wolf-boss'); }
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             } else if (state.currentZone === 3) {
                 if (state.level >= 90 && Math.random() < 0.12) { state.currentTarget = 'behemoth_z3'; state.isBoss = true; targetEl.classList.add('wolf-boss'); }
@@ -375,10 +370,7 @@
                 if (state.level >= 50 && Math.random() < 0.15) { state.currentTarget = 'wolf_z2'; state.isBoss = true; targetEl.classList.add('wolf-boss'); }
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             } else {
-                if (state.level >= 25 && Math.random() < 0.10) { 
-                    state.currentTarget = 'boss_z1'; state.isBoss = true; 
-                    targetEl.classList.add('boss-style'); 
-                }
+                if (state.level >= 25 && Math.random() < 0.10) { state.currentTarget = 'boss_z1'; state.isBoss = true; targetEl.classList.add('boss-style'); }
                 else { const types = ['hunt', 'mine', 'fish']; state.currentTarget = types[Math.floor(Math.random() * types.length)]; }
             }
             
@@ -386,7 +378,6 @@
             hp = info.hp;
             targetEl.src = info.img;
             
-            // Set base aura style
             let dropVal = state.isBoss ? (state.currentTarget === 'boss_z1' ? '30px' : '40px') : '25px';
             targetEl.style.filter = `drop-shadow(0 0 ${dropVal} ${info.aura})`;
             
