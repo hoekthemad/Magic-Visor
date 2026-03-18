@@ -78,14 +78,13 @@
         
         #gold-pill {
             position: absolute; top: -35px; left: 20px;
-            background: rgba(20, 20, 20, 0.9); border: 2px solid var(--gold);
-            padding: 6px 16px; border-radius: 30px;
-            font-size: 0.65rem; color: var(--gold);
-            display: flex; gap: 12px; cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
-            z-index: 210; backdrop-filter: blur(5px);
+            background: rgba(20, 20, 20, 0.95); border: 2px solid var(--gold);
+            padding: 8px 18px; border-radius: 30px;
+            font-size: 0.7rem; color: var(--gold);
+            display: flex; gap: 14px; cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            z-index: 210; backdrop-filter: blur(10px);
         }
-        #gold-pill span:active { opacity: 0.5; }
 
         .action-btn { position: relative; border-radius: 50%; background: #151515; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; touch-action: manipulation; }
         .main-strike { width: 90px; height: 90px; border: 4px solid #555; }
@@ -100,20 +99,18 @@
         #settings-menu { position: absolute; right: 20px; bottom: 70px; background: rgba(15, 15, 15, 0.95); border: 2px solid #444; border-radius: 8px; padding: 10px; display: none; flex-direction: column; gap: 10px; z-index: 300; }
         .set-btn { background: #222; color: white; border: 1px solid #555; border-radius: 5px; padding: 10px 15px; font-family: 'Arial Black', sans-serif; }
 
-        /* Animations */
         @keyframes strike { 0% { transform: rotate(0deg); } 25% { transform: rotate(-25deg) translate(-20px, -60px); } 100% { transform: rotate(0deg); } }
         .weapon-attack { animation: strike 0.4s ease-out forwards; }
         .hit-shake { transform: scale(0.97) translate(4px, 0); filter: brightness(1.2) !important; transition: 0.04s !important; }
         .shatter { opacity: 0 !important; transition: opacity 1.2s linear !important; }
         
         #loot-alert { position: absolute; top: 120px; width: 100%; text-align: center; color: var(--gold); font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px black; pointer-events: none; opacity: 0; z-index: 1000; transition: 0.5s; }
-        .cheater-orb { border-color: var(--boss-red) !important; color: var(--boss-red) !important; box-shadow: 0 0 40px var(--boss-red) !important; }
     </style>
 </head>
 <body>
 
     <div id="loot-alert">ITEM UNLOCKED!</div>
-    <div id="travel-gate" onclick="advanceZone()">ZONE 2: BLIGHTED PEAK</div>
+    <div id="travel-gate" onclick="advanceZone()">NEXT ZONE</div>
 
     <div id="hud-container">
         <div class="hud-orb" id="level-orb">1</div>
@@ -193,6 +190,7 @@
             const stateToSave = { ...state, active: false };
             localStorage.setItem('magicVisorSave', JSON.stringify(stateToSave));
             alertBox.innerText = "GAME SAVED!";
+            alertBox.style.opacity = "1";
             setTimeout(() => { alertBox.style.opacity = "0"; }, 2000);
             toggleSettings();
         }
@@ -200,7 +198,8 @@
         function loadGame() {
             const savedData = localStorage.getItem('magicVisorSave');
             if (savedData) {
-                state = JSON.parse(savedData);
+                const loaded = JSON.parse(savedData);
+                state = Object.assign(state, loaded); 
                 state.active = false;
                 restoreVisuals();
             }
@@ -241,14 +240,15 @@
             weaponEl.classList.add('weapon-attack');
 
             actionTimer = setTimeout(() => {
-                let polishMult = 1 + (state.polish * 0.15);
-                let damage = (34 * state.power * polishMult);
-                if (state.hasSword) damage *= 2;
-                if (state.hasDagger) damage *= 1.5; 
-                if (state.hasGreatsword) damage *= 3; 
+                let polishMult = 1 + (Number(state.polish || 0) * 0.15);
+                let damage = 34 * state.power * polishMult;
+                
                 if (state.hasScythe) damage *= 4; 
+                else if (state.hasGreatsword) damage *= 3; 
+                else if (state.hasDagger) damage *= 1.5; 
+                else if (state.hasSword) damage *= 2;
 
-                hp -= damage;
+                hp -= Math.max(1, damage); // NaN Protection
                 targetEl.classList.add('hit-shake');
                 setTimeout(() => targetEl.classList.remove('hit-shake'), 40);
                 if (hp <= 0) finishTarget();
@@ -263,12 +263,15 @@
             if (state.currentZone === 1 && state.hasSword) penalty = 0.5;
             else if (state.currentZone === 2 && state.hasDagger) penalty = 0.33;
 
-            let zoneMult = state.currentZone === 2 ? 2.0 : state.currentZone === 3 ? 5.0 : state.currentZone === 4 ? 10.0 : 1.0;
+            let zoneMults = [0, 1, 2, 5, 10];
+            let zoneMult = zoneMults[state.currentZone] || 1;
             
-            if (state.currentTarget.includes('boss') || state.currentTarget.includes('wolf') || state.currentTarget.includes('behemoth') || state.currentTarget.includes('titan')) {
+            if (state.isBoss) {
                 state.coins += Math.round(100 * penalty * zoneMult);
                 if (!state.hasSword && state.currentZone === 1 && Math.random() < 0.20) unlockItem('sword.png', 'SWORD UNLOCKED!');
                 if (!state.hasDagger && state.currentZone === 2 && Math.random() < 0.15) unlockItem('wolf_dagger.png', 'WOLF DAGGER UNLOCKED!');
+                if (!state.hasGreatsword && state.currentZone === 3 && Math.random() < 0.05) unlockItem('magma_greatsword.png', 'MAGMA SWORD UNLOCKED!');
+                if (!state.hasScythe && state.currentZone === 4 && Math.random() < 0.05) unlockItem('glacial_scythe.png', 'SCYTHE UNLOCKED!');
             } else {
                 state.coins += Math.round(10 * penalty * zoneMult);
                 if (state.currentTarget === 'mine') state.ore += Math.round(1 * penalty * zoneMult);
@@ -283,13 +286,14 @@
 
         function buyBounty() {
             let costs = [0, 100, 500, 2500, 10000];
-            let cost = costs[state.currentZone];
+            let cost = costs[state.currentZone] || 10000;
             if (state.coins >= cost) { state.coins -= cost; state.forceBoss = true; updateUI(); }
         }
 
         function polishWeapon() {
             let baseCosts = [0, 500, 2500, 10000, 25000];
-            let cost = baseCosts[state.currentZone] * (state.polish + 1);
+            let base = baseCosts[state.currentZone] || 25000;
+            let cost = base * (state.polish + 1);
             if (state.coins >= cost && state.polish < 3) {
                 state.coins -= cost; state.polish++;
                 applyPolishEffects();
@@ -310,7 +314,7 @@
             if (img.includes('dagger')) state.hasDagger = true;
             if (img.includes('greatsword')) state.hasGreatsword = true;
             if (img.includes('scythe')) state.hasScythe = true;
-            state.polish = 0; // Reset polish on new tier
+            state.polish = 0; 
             weaponEl.src = img;
             weaponEl.style.filter = "none";
             alertBox.innerText = text;
@@ -321,8 +325,9 @@
 
         function checkProgression() {
             const gate = document.getElementById('travel-gate');
-            if (state.level >= 35 && state.hasSword && state.currentZone === 1) gate.style.display = 'block';
-            else if (state.level >= 75 && state.hasDagger && state.currentZone === 2) gate.style.display = 'block';
+            if (state.level >= 35 && state.hasSword && state.currentZone === 1) { gate.style.display = 'block'; gate.innerText = "ZONE 2: BLIGHTED PEAK"; }
+            else if (state.level >= 75 && state.hasDagger && state.currentZone === 2) { gate.style.display = 'block'; gate.innerText = "ZONE 3: VOLCANIC FOREST"; }
+            else if (state.level >= 100 && state.hasGreatsword && state.currentZone === 3) { gate.style.display = 'block'; gate.innerText = "ZONE 4: GLACIAL TUNDRA"; }
             else gate.style.display = 'none';
         }
 
@@ -335,7 +340,8 @@
         function respawn() {
             targetEl.classList.remove('shatter', 'boss-style', 'wolf-boss');
             state.isBoss = false;
-            let bossKey = ['boss_z1', 'wolf_z2', 'behemoth_z3', 'titan_z4'][state.currentZone-1];
+            let bossKeys = ['boss_z1', 'wolf_z2', 'behemoth_z3', 'titan_z4'];
+            let bossKey = bossKeys[state.currentZone-1] || 'titan_z4';
             
             if (state.forceBoss || (Math.random() < 0.10)) {
                 state.currentTarget = bossKey;
@@ -347,9 +353,9 @@
             }
             
             const info = state.data[state.currentTarget];
-            hp = info.hp;
-            targetEl.src = info.img;
-            targetEl.style.filter = `drop-shadow(0 0 25px ${info.aura})`;
+            hp = info ? info.hp : 100;
+            targetEl.src = info ? info.img : 'slime.png';
+            targetEl.style.filter = `drop-shadow(0 0 25px ${info ? info.aura : '#fff'})`;
             if (state.active) actionLoop();
         }
 
@@ -371,14 +377,18 @@
         }
 
         function updateUI() {
-            document.getElementById('coins').innerText = state.coins;
+            document.getElementById('coins').innerText = Math.floor(state.coins);
             document.getElementById('ore').innerText = state.ore;
             document.getElementById('fish').innerText = state.fish;
             document.getElementById('ore-cost').innerText = state.oreReq;
             document.getElementById('fish-cost').innerText = state.fishReq;
             document.getElementById('polish-lv').innerText = state.polish;
-            document.getElementById('bounty-cost').innerText = [0, 100, 500, 2500, 10000][state.currentZone];
-            document.getElementById('polish-cost').innerText = [0, 500, 2500, 10000, 25000][state.currentZone] * (state.polish + 1);
+            
+            let bCosts = [0, 100, 500, 2500, 10000];
+            document.getElementById('bounty-cost').innerText = bCosts[state.currentZone] || 10000;
+            
+            let pBase = [0, 500, 2500, 10000, 25000];
+            document.getElementById('polish-cost').innerText = (pBase[state.currentZone] || 25000) * (state.polish + 1);
             
             const fBtn = document.getElementById('btn-forge'), bBtn = document.getElementById('btn-buff');
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
