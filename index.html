@@ -361,12 +361,26 @@
             }
         }
 
-        function applyPolishEffects() {
-            let glw = "none";
-            if (state.polish === 1) glw = "brightness(1.1) drop-shadow(0 0 8px gold)";
-            if (state.polish === 2) glw = "brightness(1.3) drop-shadow(0 0 18px gold)";
-            if (state.polish === 3) glw = "brightness(1.6) drop-shadow(0 0 28px white)";
-            weaponEl.style.filter = glw;
+        // function applyPolishEffects() {
+        //     let glw = "none";
+        //     if (state.polish === 1) glw = "brightness(1.1) drop-shadow(0 0 8px gold)";
+        //     if (state.polish === 2) glw = "brightness(1.3) drop-shadow(0 0 18px gold)";
+        //     if (state.polish === 3) glw = "brightness(1.6) drop-shadow(0 0 28px white)";
+        //     weaponEl.style.filter = glw;
+        // }
+
+        const applyPolishEffects = () => {
+            polishMin = 1;
+            polishMax = 3;
+            let stateValues = {
+                1: {brightness: `1.1`, shadow: `0 0 8px gold`},
+                2: {brightness: `1.3`, shadow: `0 0 18px gold`},
+                3: {brightness: `1.6`, shadow: `0 0 28px white`},
+            };
+            
+            weaponEl.style.filter = (state.polish >= polishMin && state.polish <= polishMax) ? 
+                `brightness(${stateValues[state.polish].brightness}) drop-shadow(${stateValues[state.polish].shadow})` :
+                `none`;
         }
 
         function unlockItem(img, text) {
