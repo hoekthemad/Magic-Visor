@@ -63,6 +63,7 @@ const SaveState = {
      * @author Hoek
      * @since 18/03/2026
      * @revisions 0
+     * @returns {void}
      */
     saveData: () => {
         currStats = JSON.stringify(this.stats);
@@ -81,6 +82,18 @@ const SaveState = {
         let localData = localStorage.getItem(`magicVisorSave`);
         if (localData.toString().length > 0) this.stats = JSON.parse(localData);
         return this.stats;
+    },
+
+    /**
+     * Get the held data from storage
+     * @author Hoek
+     * @since 18/03/2026
+     * @revisions 0
+     * @returns {void}
+     */
+    setData: (part, value) => {
+        this.stats[part] = value;
+        this.saveData();
     },
 
     /**
