@@ -74,14 +74,20 @@
         #weapon-hand { position: absolute; bottom: -20px; right: -20px; width: 300px; z-index: 50; pointer-events: none; transform-origin: bottom right; transition: filter 0.5s; }
 
         /* --- FOOTER & GOLD PILL --- */
-        #footer { position: relative; height: 160px; background: #000; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 2px solid #333; z-index: 200; }
+        #footer { 
+            position: relative; height: 160px; background: #000; 
+            display: flex; justify-content: center; align-items: center; 
+            gap: 20px; border-top: 2px solid #333; z-index: 200; 
+        }
         
         #gold-pill {
-            position: absolute; top: -35px; left: 20px;
+            position: absolute; 
+            top: 10px; /* Inside top of footer */
+            left: 10px; /* Inside left of footer */
             background: rgba(255, 255, 255, 0.05); border: 1.5px solid var(--gold);
-            padding: 8px 18px; border-radius: 40px;
-            font-size: 0.7rem; color: var(--gold);
-            display: flex; gap: 14px; cursor: pointer;
+            padding: 6px 14px; border-radius: 40px;
+            font-size: 0.65rem; color: var(--gold);
+            display: flex; gap: 12px; cursor: pointer;
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
             z-index: 210; backdrop-filter: blur(10px);
             text-shadow: 0 0 5px black;
@@ -202,12 +208,9 @@
                 try {
                     const loaded = JSON.parse(savedData);
                     state = Object.assign(state, loaded); 
-                    
-                    // --- THE SANITY CHECK ---
                     if (isNaN(state.power)) state.power = 1;
                     if (isNaN(state.coins)) state.coins = 0;
                     if (isNaN(state.polish)) state.polish = 0;
-                    
                     state.active = false;
                     restoreVisuals();
                 } catch(e) { console.error("Load failed."); }
@@ -258,12 +261,10 @@
             actionTimer = setTimeout(() => {
                 let polishMult = 1 + (Number(state.polish || 0) * 0.15);
                 let damage = 34 * state.power * polishMult;
-                
                 if (state.hasScythe) damage *= 4; 
                 else if (state.hasGreatsword) damage *= 3; 
                 else if (state.hasDagger) damage *= 1.5; 
                 else if (state.hasSword) damage *= 2;
-
                 hp -= Math.max(1, damage);
                 targetEl.classList.add('hit-shake');
                 setTimeout(() => targetEl.classList.remove('hit-shake'), 40);
@@ -278,10 +279,8 @@
             let penalty = 1.0;
             if (state.currentZone === 1 && state.hasSword) penalty = 0.5;
             else if (state.currentZone === 2 && state.hasDagger) penalty = 0.33;
-
             let zoneMults = [0, 1, 2, 5, 10];
             let zoneMult = zoneMults[state.currentZone] || 1;
-            
             if (state.isBoss) {
                 state.coins += Math.round(100 * penalty * zoneMult);
                 if (!state.hasSword && state.currentZone === 1 && Math.random() < 0.20) unlockItem('sword.png', 'SWORD UNLOCKED!');
@@ -293,7 +292,6 @@
                 if (state.currentTarget === 'mine') state.ore += Math.round(1 * penalty * zoneMult);
                 if (state.currentTarget === 'fish') state.fish += Math.round(1 * penalty * zoneMult);
             }
-
             gainExp(state.isBoss ? 200 * penalty : 25 * penalty);
             updateUI();
             checkProgression();
@@ -358,7 +356,6 @@
             state.isBoss = false;
             let bKeys = ['boss_z1', 'wolf_z2', 'behemoth_z3', 'titan_z4'];
             let bossKey = bKeys[state.currentZone-1] || 'titan_z4';
-            
             if (state.forceBoss || (Math.random() < 0.10)) {
                 state.currentTarget = bossKey;
                 state.isBoss = true;
@@ -367,7 +364,6 @@
             } else {
                 state.currentTarget = ['hunt', 'mine', 'fish'][Math.floor(Math.random()*3)];
             }
-            
             const info = state.data[state.currentTarget];
             hp = info ? info.hp : 100;
             targetEl.src = info ? info.img : 'slime.png';
@@ -399,13 +395,10 @@
             document.getElementById('ore-cost').innerText = state.oreReq;
             document.getElementById('fish-cost').innerText = state.fishReq;
             document.getElementById('polish-lv').innerText = state.polish;
-            
             let bCosts = [0, 100, 500, 2500, 10000];
             document.getElementById('bounty-cost').innerText = bCosts[state.currentZone] || 10000;
-            
             let pBase = [0, 500, 2500, 10000, 25000];
             document.getElementById('polish-cost').innerText = (pBase[state.currentZone] || 25000) * (state.polish + 1);
-            
             const fBtn = document.getElementById('btn-forge'), bBtn = document.getElementById('btn-buff');
             if (state.ore >= state.oreReq) fBtn.classList.remove('disabled'); else fBtn.classList.add('disabled');
             if (state.fish >= state.fishReq && !state.isBuffed) bBtn.classList.remove('disabled'); else bBtn.classList.add('disabled');
